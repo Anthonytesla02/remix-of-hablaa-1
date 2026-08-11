@@ -6,7 +6,7 @@ import { Redaction } from "@/components/Redaction";
 import { bcp47 } from "@/lib/content";
 import { useApp } from "@/lib/store";
 
-export const Route = createFileRoute("/vault")({
+export const Route = createFileRoute("/_authenticated/vault")({
   head: () => ({
     meta: [
       { title: "Debrief Vault — Operation Lingua" },
