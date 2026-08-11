@@ -27,7 +27,7 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
   const addXp = useApp((s) => s.addXp);
 
   // Pronunciation grading state
-  const { recording, error: micError, start, stop, cancel } = useAudioRecorder();
+  const { recording, error: micError, start, stop } = useAudioRecorder();
   const [grading, setGrading] = useState(false);
   const [pronResult, setPronResult] = useState<
     | { grade: string; transcript: string; overlap: number }
