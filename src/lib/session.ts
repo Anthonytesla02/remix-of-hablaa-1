@@ -36,7 +36,7 @@ export function buildSession(opts: {
   checkpoint?: boolean;
 }): Step[] {
   const { day, tierId, cards, lang, checkpoint } = opts;
-  const mix = TIER_MIX[tierId] ?? TIER_MIX.field_op_30!;
+  const mix = TIER_MIX[tierId] ?? TIER_MIX['field_op_30']!;
   const reviewCap = Math.min(
     mix.review,
     (srsEngine.daily_review_cap_by_tier as Record<string, number>)[tierId] ?? 20,
