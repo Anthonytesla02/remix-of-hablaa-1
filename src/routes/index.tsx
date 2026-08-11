@@ -9,6 +9,8 @@ import {
   projectedClearance,
 } from "@/lib/content";
 import { useApp } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { syncToCloud } from "@/lib/cloud-sync";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,10 +48,19 @@ function IntakePage() {
   const [personaId, setPersonaId] = useState("undercover_traveler");
   const [timelineId, setTimelineId] = useState("standard_90");
   const [tierId, setTierId] = useState("field_op_30");
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (profile) void navigate({ to: "/dashboard" });
-  }, [profile, navigate]);
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      setAuthChecked(true);
+      if (!data.session) {
+        void navigate({ to: "/auth" });
+        return;
+      }
+      if (profile) void navigate({ to: "/dashboard" });
+    })();
+  }, [navigate, profile]);
 
   const projection = projectedClearance(langId, timelineId, tierId);
 
