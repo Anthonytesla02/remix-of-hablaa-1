@@ -1,0 +1,236 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { gamification, clearanceForXp } from "@/lib/content";
+import { newCard, schedule, type SrsCard } from "@/lib/srs";
+
+export type Profile = {
+  callsign: string;
+  langId: string;
+  timelineId: string;
+  tierId: string;
+  personaId: string;
+  startedAt: number;
+};
+
+export type Quest = { id: string; label: string; reward_xp: number; done: boolean };
+
+export type SessionSummary = {
+  date: number;
+  dayKey: string;
+  xp: number;
+  accuracy: number;
+  items: number;
+  coverIntact: boolean;
+};
+
+type State = {
+  profile: Profile | null;
+  xp: number;
+  weeklyXp: number;
+  credits: number;
+  streak: number;
+  lastActiveDay: string | null;
+  longestStreak: number;
+  freezes: number;
+  badges: string[];
+  cards: Record<string, SrsCard>;
+  completedDays: string[];
+  history: SessionSummary[];
+  quests: { day: string; list: Quest[] };
+  leagueTier: number;
+  ghostSeed: number;
+  stsStreak: number;
+  shadowReps: number;
+  perfectWeek: boolean;
+  settings: { rate: number; captions: boolean };
+  lastLoginDay: string | null;
+
+  setProfile: (p: Profile) => void;
+  resetAll: () => void;
+  todayKey: () => string;
+  registerLogin: () => void;
+  addXp: (n: number) => void;
+  spend: (n: number) => boolean;
+  grantBadge: (id: string) => void;
+  reviewCard: (id: string, correct: boolean) => void;
+  seedCards: (items: { id: string; target: string; translation: string }[], lang: string) => void;
+  completeSession: (s: SessionSummary, questFlags: Record<string, boolean>) => void;
+  bumpSts: (correct: boolean) => void;
+  bumpShadow: () => void;
+  setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
+};
+
+function dayKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function pickQuests(): Quest[] {
+  const all = gamification.daily_quest_templates as { id: string; label: string; reward_xp: number }[];
+  const shuffled = [...all].sort(() => Math.random() - 0.5).slice(0, 3);
+  return shuffled.map((q) => ({ ...q, done: false }));
+}
+
+const initial = {
+  profile: null,
+  xp: 0,
+  weeklyXp: 0,
+  credits: 50,
+  streak: 0,
+  lastActiveDay: null,
+  longestStreak: 0,
+  freezes: 0,
+  badges: [] as string[],
+  cards: {} as Record<string, SrsCard>,
+  completedDays: [] as string[],
+  history: [] as SessionSummary[],
+  quests: { day: "", list: [] as Quest[] },
+  leagueTier: 1,
+  ghostSeed: Math.floor(Math.random() * 1000),
+  stsStreak: 0,
+  shadowReps: 0,
+  perfectWeek: true,
+  settings: { rate: 1, captions: true },
+  lastLoginDay: null,
+};
+
+export const useApp = create<State>()(
+  persist(
+    (set, get) => ({
+      ...initial,
+
+      setProfile: (p) => set({ profile: p }),
+      resetAll: () => set({ ...initial, ghostSeed: Math.floor(Math.random() * 1000) }),
+      todayKey: () => dayKey(),
+
+      registerLogin: () => {
+        const today = dayKey();
+        const s = get();
+        if (s.lastLoginDay === today && s.quests.day === today) return;
+        const patch: Partial<State> = { lastLoginDay: today };
+        if (s.lastLoginDay !== today) patch.credits = s.credits + gamification.currency.earn_rules.daily_login;
+        if (s.quests.day !== today) patch.quests = { day: today, list: pickQuests() };
+        set(patch as State);
+      },
+
+      addXp: (n) =>
+        set((s) => {
+          const xp = s.xp + n;
+          const creditsEarned = Math.floor(xp / 20) - Math.floor(s.xp / 20);
+          return { xp, weeklyXp: s.weeklyXp + n, credits: s.credits + creditsEarned };
+        }),
+
+      spend: (n) => {
+        if (get().credits < n) return false;
+        set((s) => ({ credits: s.credits - n }));
+        return true;
+      },
+
+      grantBadge: (id) =>
+        set((s) => (s.badges.includes(id) ? s : { badges: [...s.badges, id] })),
+
+      seedCards: (items, lang) =>
+        set((s) => {
+          const cards = { ...s.cards };
+          for (const it of items) {
+            if (!cards[it.id]) cards[it.id] = newCard(it.id, it.target, it.translation, lang);
+          }
+          return { cards };
+        }),
+
+      reviewCard: (id, correct) =>
+        set((s) => {
+          const card = s.cards[id];
+          if (!card) return s;
+          return { cards: { ...s.cards, [id]: schedule(card, correct) } };
+        }),
+
+      bumpSts: (correct) =>
+        set((s) => {
+          const stsStreak = correct ? s.stsStreak + 1 : 0;
+          const badges = stsStreak >= 10 && !s.badges.includes("silver_tongue")
+            ? [...s.badges, "silver_tongue"]
+            : s.badges;
+          return { stsStreak, badges };
+        }),
+
+      bumpShadow: () =>
+        set((s) => {
+          const shadowReps = s.shadowReps + 1;
+          const badges = shadowReps >= 50 && !s.badges.includes("the_shadow")
+            ? [...s.badges, "the_shadow"]
+            : s.badges;
+          return { shadowReps, badges };
+        }),
+
+      setSetting: (k, v) => set((s) => ({ settings: { ...s.settings, [k]: v } })),
+
+      completeSession: (summary, questFlags) => {
+        const s = get();
+        const today = dayKey();
+        const yesterday = dayKey(new Date(Date.now() - 86400000));
+        const gapDays = s.lastActiveDay
+          ? Math.round((Date.parse(today) - Date.parse(s.lastActiveDay)) / 86400000)
+          : 0;
+
+        let streak = s.streak;
+        if (s.lastActiveDay !== today) {
+          streak = s.lastActiveDay === yesterday ? s.streak + 1 : 1;
+        }
+
+        const badges = new Set(s.badges);
+        if (s.completedDays.length === 0) badges.add("first_contact");
+        const hour = new Date().getHours();
+        if (hour >= 22 || hour < 4) badges.add("night_shift");
+        if (hour < 7) badges.add("dawn_patrol");
+        if (streak >= 30) badges.add("ghost_protocol");
+        if (streak >= 90) badges.add("deep_cover_operative");
+        if (streak >= 180) badges.add("directors_circle");
+        if (gapDays >= 7) badges.add("comeback_asset");
+        if (summary.accuracy >= 0.9 && summary.coverIntact) badges.add("quick_study");
+
+        // Streak milestone credits
+        let credits = s.credits;
+        const milestones: Record<number, number> = { 7: 25, 30: 50, 90: 100 };
+        if (s.lastActiveDay !== today && milestones[streak]) credits += milestones[streak]!;
+
+        // Daily quests
+        const list = s.quests.list.map((q) =>
+          q.done || !questFlags[q.id] ? q : { ...q, done: true },
+        );
+        const questXp = list.reduce(
+          (acc, q, i) => acc + (q.done && !s.quests.list[i]!.done ? q.reward_xp : 0),
+          0,
+        );
+
+        const totalXp = summary.xp + questXp;
+        const creditsEarned = Math.floor((s.xp + totalXp) / 20) - Math.floor(s.xp / 20);
+
+        const completedDays = s.completedDays.includes(summary.dayKey)
+          ? s.completedDays
+          : [...s.completedDays, summary.dayKey];
+
+        if (completedDays.filter((d) => d.startsWith("arc_1")).length >= 3)
+          badges.add("border_crosser");
+
+        set({
+          xp: s.xp + totalXp,
+          weeklyXp: s.weeklyXp + totalXp,
+          credits: credits + creditsEarned,
+          streak,
+          longestStreak: Math.max(s.longestStreak, streak),
+          lastActiveDay: today,
+          badges: [...badges],
+          completedDays,
+          quests: { day: today, list },
+          history: [{ ...summary, xp: totalXp }, ...s.history].slice(0, 30),
+        });
+      },
+    }),
+    { name: "operation-lingua-v1" },
+  ),
+);
+
+export function useClearance() {
+  const xp = useApp((s) => s.xp);
+  return clearanceForXp(xp);
+}
