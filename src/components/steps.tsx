@@ -24,6 +24,54 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
   const [picked, setPicked] = useState<string | null>(null);
   const say = useSpeaker(locale);
   const correct = picked === data.correct_option_id;
+  const addXp = useApp((s) => s.addXp);
+
+  // Pronunciation grading state
+  const { recording, error: micError, start, stop, cancel } = useAudioRecorder();
+  const [grading, setGrading] = useState(false);
+  const [pronResult, setPronResult] = useState<
+    | { grade: string; transcript: string; overlap: number }
+    | null
+  >(null);
+  const [pronError, setPronError] = useState<string | null>(null);
+
+  const correctOption = data.options.find((o) => o.id === data.correct_option_id);
+
+  async function handleMic() {
+    if (recording) {
+      setGrading(true);
+      setPronError(null);
+      const result = await stop();
+      if (!result) {
+        setGrading(false);
+        setPronError("No audio captured — try again");
+        return;
+      }
+      try {
+        const grade = await gradePronunciation({
+          audio: result.base64,
+          expected: correctOption?.target ?? "",
+          locale,
+          mimeType: result.mimeType,
+        });
+        setPronResult(grade);
+        // Bonus XP for good pronunciation
+        if (grade.grade === "exact") {
+          addXp(5);
+        } else if (grade.grade === "close") {
+          addXp(2);
+        }
+      } catch (e) {
+        setPronError(e instanceof Error ? e.message : "Grading failed");
+      } finally {
+        setGrading(false);
+      }
+    } else {
+      setPronResult(null);
+      setPronError(null);
+      void start();
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -56,6 +104,73 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
               <div className="px-2 pb-2 pt-1">
                 <Redaction text={o.translation} label="(i) DECLASSIFY" />
               </div>
+              {/* Mic button beside correct answer after correct pick */}
+              {picked !== null && isAnswer && correct && (
+                <div className="border-t border-primary/30 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={handleMic}
+                    disabled={grading}
+                    className={`flex w-full items-center gap-2 text-[11px] ${
+                      recording
+                        ? "text-destructive"
+                        : "text-primary"
+                    }`}
+                  >
+                    {grading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mic
+                        className={`h-4 w-4 ${recording ? "animate-pulse" : ""}`}
+                      />
+                    )}
+                    {grading
+                      ? "GRADING…"
+                      : recording
+                        ? "● RECORDING — TAP TO STOP"
+                        : pronResult
+                          ? "RETRY PHRASE"
+                          : "REPEAT PHRASE"}
+                  </button>
+                  {micError && (
+                    <p className="mt-1 text-[10px] text-destructive">{micError}</p>
+                  )}
+                  {pronError && (
+                    <p className="mt-1 text-[10px] text-destructive">{pronError}</p>
+                  )}
+                  {pronResult && (
+                    <div className="mt-2 space-y-1">
+                      <p
+                        className={`hud text-[10px] ${
+                          pronResult.grade === "exact"
+                            ? "text-primary"
+                            : pronResult.grade === "close"
+                              ? "text-yellow-500"
+                              : "text-destructive"
+                        }`}
+                      >
+                        {pronResult.grade === "exact"
+                          ? "◆ PRONUNCIATION: NATIVE-LIKE"
+                          : pronResult.grade === "close"
+                            ? "◆ PRONUNCIATION: CLOSE"
+                            : "◆ PRONUNCIATION: NEEDS WORK"}
+                        {" "}
+                        ({pronResult.overlap}%)
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        You said: <span className="text-foreground">{pronResult.transcript}</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void say(correctOption?.target ?? "")}
+                        className="hud mt-1 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        <Volume2 className="h-3 w-3" /> HEAR REFERENCE
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
