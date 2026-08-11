@@ -13,7 +13,9 @@ const TABS = [
 ] as const;
 
 export function HudBar() {
-  const { xp, credits, streak } = useApp((s) => ({ xp: s.xp, credits: s.credits, streak: s.streak }));
+  const xp = useApp((s) => s.xp);
+  const credits = useApp((s) => s.credits);
+  const streak = useApp((s) => s.streak);
   const clearance = useClearance();
 
   return (

@@ -152,7 +152,7 @@ export function projectedClearance(langId: string, timelineId: string, tierId: s
   const lang = langById(langId);
   const tl = onboarding.goal_timelines.find((t) => t.id === timelineId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === tierId);
-  if (!lang || !tl || !tier) return clearanceLevels[0];
+  if (!lang || !tl || !tier) return clearanceLevels[0]!;
   const hours = (tl.days * tier.minutes) / 60 / lang.category_multiplier;
   const bands: [number, number][] = [
     [8, 0.5],
@@ -168,7 +168,7 @@ export function projectedClearance(langId: string, timelineId: string, tierId: s
       break;
     }
   }
-  return clearanceLevels.find((c) => c.level === level) ?? clearanceLevels[0];
+  return clearanceLevels.find((c) => c.level === level) ?? clearanceLevels[0]!;
 }
 
 export function clearanceForXp(xp: number) {
@@ -184,7 +184,7 @@ export function clearanceForXp(xp: number) {
   let level = 0;
   for (const [x, lvl] of thresholds) if (xp >= x) level = lvl;
   const next = thresholds.find(([, lvl]) => lvl > level);
-  const current = clearanceLevels.find((c) => c.level === level) ?? clearanceLevels[0];
+  const current = clearanceLevels.find((c) => c.level === level) ?? clearanceLevels[0]!;
   const prevX = thresholds.find(([, lvl]) => lvl === level)![0];
   return {
     current,
