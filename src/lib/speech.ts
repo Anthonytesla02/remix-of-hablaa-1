@@ -9,7 +9,7 @@ let voicesCache: SpeechSynthesisVoice[] = [];
 function pickVoice(locale: string) {
   if (!ttsSupported()) return undefined;
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis.getVoices();
-  const base = locale.split("-")[0];
+  const base = locale.split("-")[0] ?? locale;
   return (
     voicesCache.find((v) => v.lang.replace("_", "-") === locale) ??
     voicesCache.find((v) => v.lang.replace("_", "-").startsWith(base))
