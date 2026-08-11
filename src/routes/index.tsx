@@ -64,7 +64,7 @@ function IntakePage() {
 
   const projection = projectedClearance(langId, timelineId, tierId);
 
-  function next() {
+  async function next() {
     if (step < STEPS.length - 1) return setStep(step + 1);
     setProfile({
       callsign: callsign.trim() || "OPERATIVE",
@@ -74,6 +74,9 @@ function IntakePage() {
       personaId,
       startedAt: Date.now(),
     });
+    // Save the new profile to cloud
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user?.id) void syncToCloud(data.session.user.id);
     void navigate({ to: "/dashboard" });
   }
 
