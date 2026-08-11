@@ -82,6 +82,14 @@ function IntakePage() {
 
   const canAdvance = step !== 0 || callsign.trim().length > 0;
 
+  if (!authChecked) {
+    return (
+      <div className="topo flex min-h-[100dvh] items-center justify-center">
+        <p className="hud animate-pulse text-xs text-muted-foreground">ESTABLISHING SECURE LINK…</p>
+      </div>
+    );
+  }
+
   return (
     <AppFrame tabs={false}>
       <div className="flex min-h-[100dvh] flex-col pb-8">
