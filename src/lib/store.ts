@@ -44,6 +44,8 @@ type State = {
   perfectWeek: boolean;
   settings: { rate: number; captions: boolean };
   lastLoginDay: string | null;
+  cloudSyncActive: boolean;
+  cloudUserId: string | null;
 
   setProfile: (p: Profile) => void;
   resetAll: () => void;
@@ -58,6 +60,7 @@ type State = {
   bumpSts: (correct: boolean) => void;
   bumpShadow: () => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
+  setCloudSync: (active: boolean, userId: string | null) => void;
 };
 
 function dayKey(d = new Date()) {
@@ -91,6 +94,8 @@ const initial = {
   perfectWeek: true,
   settings: { rate: 1, captions: true },
   lastLoginDay: null,
+  cloudSyncActive: false,
+  cloudUserId: null,
 };
 
 export const useApp = create<State>()(
@@ -162,7 +167,9 @@ export const useApp = create<State>()(
           return { shadowReps, badges };
         }),
 
-      setSetting: (k, v) => set((s) => ({ settings: { ...s.settings, [k]: v } })),
+      setSetting: (k, v) => set((s) => ({ settings: { ...s.settings, [k]: v] })),
+
+      setCloudSync: (active, userId) => set({ cloudSyncActive: active, cloudUserId: userId }),
 
       completeSession: (summary, questFlags) => {
         const s = get();
