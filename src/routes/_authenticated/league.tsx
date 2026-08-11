@@ -3,7 +3,7 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification } from "@/lib/content";
 import { useApp } from "@/lib/store";
 
-export const Route = createFileRoute("/league")({
+export const Route = createFileRoute("/_authenticated/league")({
   head: () => ({
     meta: [
       { title: "Weekly League — Operation Lingua" },

@@ -4,7 +4,7 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
 import { useApp, useClearance } from "@/lib/store";
 
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
       { title: "Operative Dossier — Operation Lingua" },

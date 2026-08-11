@@ -10,76 +10,76 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as LeagueRouteImport } from './routes/league'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as SessionRouteImport } from './routes/session'
-import { Route as ShopRouteImport } from './routes/shop'
-import { Route as VaultRouteImport } from './routes/vault'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated/league'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSessionRouteImport } from './routes/_authenticated/session'
+import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
+import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/_authenticated/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeagueRoute = LeagueRouteImport.update({
-  id: '/league',
+const AuthenticatedLeagueRoute = AuthenticatedLeagueRouteImport.update({
+  id: '/_authenticated/league',
   path: '/league',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/_authenticated/profile',
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SessionRoute = SessionRouteImport.update({
-  id: '/session',
+const AuthenticatedSessionRoute = AuthenticatedSessionRouteImport.update({
+  id: '/_authenticated/session',
   path: '/session',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShopRoute = ShopRouteImport.update({
-  id: '/shop',
+const AuthenticatedShopRoute = AuthenticatedShopRouteImport.update({
+  id: '/_authenticated/shop',
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VaultRoute = VaultRouteImport.update({
-  id: '/vault',
+const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
+  id: '/_authenticated/vault',
   path: '/vault',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/league': typeof LeagueRoute
-  '/profile': typeof ProfileRoute
-  '/session': typeof SessionRoute
-  '/shop': typeof ShopRoute
-  '/vault': typeof VaultRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/session': typeof AuthenticatedSessionRoute
+  '/shop': typeof AuthenticatedShopRoute
+  '/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/league': typeof LeagueRoute
-  '/profile': typeof ProfileRoute
-  '/session': typeof SessionRoute
-  '/shop': typeof ShopRoute
-  '/vault': typeof VaultRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/league': typeof AuthenticatedLeagueRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/session': typeof AuthenticatedSessionRoute
+  '/shop': typeof AuthenticatedShopRoute
+  '/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/league': typeof LeagueRoute
-  '/profile': typeof ProfileRoute
-  '/session': typeof SessionRoute
-  '/shop': typeof ShopRoute
-  '/vault': typeof VaultRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/league': typeof AuthenticatedLeagueRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/session': typeof AuthenticatedSessionRoute
+  '/_authenticated/shop': typeof AuthenticatedShopRoute
+  '/_authenticated/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,22 +103,22 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
-    | '/league'
-    | '/profile'
-    | '/session'
-    | '/shop'
-    | '/vault'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/league'
+    | '/_authenticated/profile'
+    | '/_authenticated/session'
+    | '/_authenticated/shop'
+    | '/_authenticated/vault'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
-  LeagueRoute: typeof LeagueRoute
-  ProfileRoute: typeof ProfileRoute
-  SessionRoute: typeof SessionRoute
-  ShopRoute: typeof ShopRoute
-  VaultRoute: typeof VaultRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLeagueRoute: typeof AuthenticatedLeagueRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSessionRoute: typeof AuthenticatedSessionRoute
+  AuthenticatedShopRoute: typeof AuthenticatedShopRoute
+  AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -130,46 +130,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/league': {
-      id: '/league'
+    '/_authenticated/league': {
+      id: '/_authenticated/league'
       path: '/league'
       fullPath: '/league'
-      preLoaderRoute: typeof LeagueRouteImport
+      preLoaderRoute: typeof AuthenticatedLeagueRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile': {
-      id: '/profile'
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
       path: '/profile'
       fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/session': {
-      id: '/session'
+    '/_authenticated/session': {
+      id: '/_authenticated/session'
       path: '/session'
       fullPath: '/session'
-      preLoaderRoute: typeof SessionRouteImport
+      preLoaderRoute: typeof AuthenticatedSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/shop': {
-      id: '/shop'
+    '/_authenticated/shop': {
+      id: '/_authenticated/shop'
       path: '/shop'
       fullPath: '/shop'
-      preLoaderRoute: typeof ShopRouteImport
+      preLoaderRoute: typeof AuthenticatedShopRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/vault': {
-      id: '/vault'
+    '/_authenticated/vault': {
+      id: '/_authenticated/vault'
       path: '/vault'
       fullPath: '/vault'
-      preLoaderRoute: typeof VaultRouteImport
+      preLoaderRoute: typeof AuthenticatedVaultRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -177,23 +177,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
-  LeagueRoute: LeagueRoute,
-  ProfileRoute: ProfileRoute,
-  SessionRoute: SessionRoute,
-  ShopRoute: ShopRoute,
-  VaultRoute: VaultRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLeagueRoute: AuthenticatedLeagueRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSessionRoute: AuthenticatedSessionRoute,
+  AuthenticatedShopRoute: AuthenticatedShopRoute,
+  AuthenticatedVaultRoute: AuthenticatedVaultRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

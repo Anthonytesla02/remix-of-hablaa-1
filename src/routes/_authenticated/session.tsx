@@ -11,7 +11,7 @@ import { dueCards } from "@/lib/srs";
 
 type Mode = "mission" | "review" | "checkpoint";
 
-export const Route = createFileRoute("/session")({
+export const Route = createFileRoute("/_authenticated/session")({
   validateSearch: (s: Record<string, unknown>): { day: string; mode: Mode } => ({
     day: String(s['day'] ?? ""),
     mode: (["mission", "review", "checkpoint"].includes(String(s['mode'])) ? s['mode'] : "mission") as Mode,

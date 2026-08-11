@@ -4,7 +4,7 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification } from "@/lib/content";
 import { useApp } from "@/lib/store";
 
-export const Route = createFileRoute("/shop")({
+export const Route = createFileRoute("/_authenticated/shop")({
   head: () => ({
     meta: [
       { title: "Supply Depot — Operation Lingua" },

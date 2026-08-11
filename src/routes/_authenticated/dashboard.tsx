@@ -6,7 +6,7 @@ import { arcTitle, langById, missionDays, onboarding } from "@/lib/content";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Case File Map — Operation Lingua" },
