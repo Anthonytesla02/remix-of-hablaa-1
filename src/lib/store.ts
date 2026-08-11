@@ -167,7 +167,7 @@ export const useApp = create<State>()(
           return { shadowReps, badges };
         }),
 
-      setSetting: (k, v) => set((s) => ({ settings: { ...s.settings, [k]: v] })),
+      setSetting: (k, v) => set((s) => ({ settings: { ...s.settings, [k]: v } })),
 
       setCloudSync: (active, userId) => set({ cloudSyncActive: active, cloudUserId: userId }),
 
