@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Keyboard, Check, X } from "lucide-react";
+import { Mic, Keyboard, Check, X, Volume2, Loader2 } from "lucide-react";
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { Redaction } from "@/components/Redaction";
 import { evaluateResponse, listenOnce, normalize, sttSupported } from "@/lib/speech";
+import { gradePronunciation } from "@/lib/pronunciation.functions";
+import { useAudioRecorder } from "@/lib/audio-recorder";
 import type { Step } from "@/lib/session";
 import type { Dictation, Mcq, PatternDrill, Shadow, Sts } from "@/lib/content";
 import type { SrsCard } from "@/lib/srs";
