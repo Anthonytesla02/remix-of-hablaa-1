@@ -49,10 +49,12 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
       }
       try {
         const grade = await gradePronunciation({
-          audio: result.base64,
-          expected: correctOption?.target ?? "",
-          locale,
-          mimeType: result.mimeType,
+          data: {
+            audio: result.base64,
+            expected: correctOption?.target ?? "",
+            locale,
+            mimeType: result.mimeType,
+          },
         });
         setPronResult(grade);
         // Bonus XP for good pronunciation
