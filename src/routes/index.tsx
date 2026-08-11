@@ -175,7 +175,7 @@ function IntakePage() {
                 </span>
                 <span className="mt-1 block text-xs text-muted-foreground">
                   ~{t.approx_new_items_per_session} new items · drills, review, shadowing
-                  {t.session_composition.sts_min ? ", live speech" : ""}
+                  {t.session_composition['sts_min'] ? ", live speech" : ""}
                 </span>
               </button>
             ))}
