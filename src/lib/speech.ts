@@ -6,6 +6,35 @@ export function ttsSupported() {
 
 let voicesCache: SpeechSynthesisVoice[] = [];
 
+/** Voices load asynchronously in Chrome/Safari; wait (briefly) for them. */
+function voicesReady(): Promise<SpeechSynthesisVoice[]> {
+  return new Promise((resolve) => {
+    if (!ttsSupported()) return resolve([]);
+    const load = () => window.speechSynthesis.getVoices();
+    voicesCache = load();
+    if (voicesCache.length > 0) return resolve(voicesCache);
+
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      voicesCache = load();
+      window.speechSynthesis.onvoiceschanged = null;
+      resolve(voicesCache);
+    };
+    window.speechSynthesis.onvoiceschanged = done;
+    // Poll as a fallback: some browsers never fire onvoiceschanged.
+    let tries = 0;
+    const iv = setInterval(() => {
+      tries += 1;
+      if (load().length > 0 || tries > 20) {
+        clearInterval(iv);
+        done();
+      }
+    }, 100);
+  });
+}
+
 function pickVoice(locale: string) {
   if (!ttsSupported()) return undefined;
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis.getVoices();
@@ -16,30 +45,81 @@ function pickVoice(locale: string) {
   );
 }
 
-export function speak(text: string, locale: string, rate = 1): Promise<void> {
-  return new Promise((resolve) => {
-    if (!ttsSupported() || !text) return resolve();
-    try {
-      window.speechSynthesis.cancel();
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export async function speak(text: string, locale: string, rate = 1): Promise<void> {
+  if (!ttsSupported() || !text) return;
+  const synth = window.speechSynthesis;
+  try {
+    await voicesReady();
+
+    // Clear any queued/stuck utterance, then give the engine a beat.
+    // Speaking immediately after cancel() is silently dropped in Chrome.
+    synth.cancel();
+    if (synth.paused) synth.resume();
+    await wait(120);
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearInterval(watchdog);
+        resolve();
+      };
+
       const u = new SpeechSynthesisUtterance(text);
       u.lang = locale;
       u.rate = rate;
       const v = pickVoice(locale);
       if (v) u.voice = v;
-      u.onend = () => resolve();
-      u.onerror = () => resolve();
-      window.speechSynthesis.speak(u);
-      // Safety net: some browsers never fire onend.
-      setTimeout(resolve, Math.max(2500, text.length * 110));
-    } catch {
-      resolve();
-    }
-  });
+      u.onend = finish;
+      u.onerror = finish;
+
+      let started = false;
+      u.onstart = () => {
+        started = true;
+      };
+
+      // Watchdog: if the engine never starts (Chrome queue bug) retry once;
+      // if it stalls mid-utterance, bail out instead of hanging forever.
+      let ticks = 0;
+      let retried = false;
+      const watchdog = setInterval(() => {
+        ticks += 1;
+        if (!started && !synth.speaking && !synth.pending) {
+          if (!retried && ticks >= 5) {
+            retried = true;
+            try {
+              synth.resume();
+              synth.speak(u);
+            } catch {
+              finish();
+            }
+          } else if (retried && ticks >= 20) {
+            finish();
+          }
+          return;
+        }
+        if (started && !synth.speaking && !synth.pending) finish();
+        if (ticks > 300) finish();
+      }, 100);
+
+      try {
+        synth.speak(u);
+      } catch {
+        finish();
+      }
+    });
+  } catch {
+    /* noop */
+  }
 }
 
 export function stopSpeaking() {
   if (ttsSupported()) window.speechSynthesis.cancel();
 }
+
 
 type SR = any;
 
