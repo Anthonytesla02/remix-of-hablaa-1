@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Keyboard, Check, X, Volume2, Loader2 } from "lucide-react";
+import { Mic, Keyboard, Check, X, Volume2, Loader2, Lightbulb } from "lucide-react";
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { Redaction } from "@/components/Redaction";
+import { Glossed } from "@/components/Glossed";
 import { evaluateResponse, listenOnce, normalize, sttSupported } from "@/lib/speech";
 import { gradePronunciation } from "@/lib/pronunciation.functions";
 import { useAudioRecorder } from "@/lib/audio-recorder";
@@ -92,17 +93,22 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
                   : "border-border bg-card opacity-50";
           return (
             <div key={o.id} className={`rounded-sm border ${state}`}>
-              <button
-                type="button"
-                disabled={picked !== null}
-                onClick={() => {
-                  setPicked(o.id);
-                  void say(o.target);
-                }}
-                className="block w-full px-3 pt-3 text-left text-base"
-              >
-                {o.target}
-              </button>
+              {picked === null ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPicked(o.id);
+                    void say(o.target);
+                  }}
+                  className="block w-full px-3 pt-3 text-left text-base"
+                >
+                  {o.target}
+                </button>
+              ) : (
+                <div className="block w-full px-3 pt-3 text-left text-base">
+                  <Glossed text={o.target} locale={locale} />
+                </div>
+              )}
               <div className="px-2 pb-2 pt-1">
                 <Redaction text={o.translation} label="(i) DECLASSIFY" />
               </div>
@@ -211,12 +217,16 @@ export function PatternStep({
     <div className="space-y-4">
       <div className="paper-card p-4">
         <p className="hud text-[10px] text-destructive">PATTERN</p>
-        <p className="mt-1 text-lg">{data.structure}</p>
+        <p className="mt-1 text-lg">
+          <Glossed text={data.structure} locale={locale} />
+        </p>
         <div className="mt-2">
           <Redaction text={data.structure_translation} />
         </div>
         <p className="hud mt-4 text-[10px] text-destructive">SUBSTITUTION</p>
-        <p className="mt-1 text-lg">{sub.target}</p>
+        <p className="mt-1 text-lg">
+          <Glossed text={sub.target} locale={locale} />
+        </p>
       </div>
 
       {phase === "cue" ? (
@@ -231,7 +241,9 @@ export function PatternStep({
       ) : (
         <>
           <div className="rounded-sm border border-primary/50 bg-primary/10 p-4 text-center">
-            <p className="text-lg">{answer}</p>
+            <p className="text-lg">
+              <Glossed text={answer} locale={locale} />
+            </p>
           </div>
           <PlayButton text={answer} locale={locale} label="REPLAY" />
           <div className="grid grid-cols-2 gap-2">
@@ -272,7 +284,9 @@ export function ReviewStep({ data, locale, onDone }: Props & { data: SrsCard }) 
       ) : (
         <>
           <div className="paper-card p-4 text-center">
-            <p className="text-lg">{data.target}</p>
+            <p className="text-lg">
+              <Glossed text={data.target} locale={locale} />
+            </p>
             <div className="mt-2">
               <Redaction text={data.translation} />
             </div>
@@ -325,7 +339,9 @@ export function ShadowStep({ data, locale, onDone }: Props & { data: Shadow }) {
         {blind ? (
           <p className="hud py-3 text-[10px] opacity-60">BLIND STAGE — AUDIO ONLY</p>
         ) : (
-          <p className="text-lg">{data.target_text}</p>
+          <p className="text-lg">
+            <Glossed text={data.target_text} locale={locale} />
+          </p>
         )}
         <div className="mt-2">
           <Redaction text={data.translation} />
@@ -351,6 +367,107 @@ export function ShadowStep({ data, locale, onDone }: Props & { data: Shadow }) {
       <button className={btn} onClick={doRep}>
         REP COMPLETE
       </button>
+    </div>
+  );
+}
+
+/* ── Response Aid — scaffolding so a beginner can actually reply ─────── */
+function ResponseAid({
+  data,
+  locale,
+  onWord,
+  onClear,
+}: {
+  data: Sts;
+  locale: string;
+  onWord: (w: string) => void;
+  onClear: () => void;
+}) {
+  const [showModel, setShowModel] = useState(false);
+  const say = useSpeaker(locale);
+  const model = data.expected_answers[0];
+  const bank = useMemo(() => {
+    const words = (model?.target ?? "")
+      .replace(/\[.*?\]/g, "")
+      .split(/\s+/)
+      .map((w) => w.replace(/[.,!?¿¡]/g, ""))
+      .filter(Boolean);
+    return [...new Set(words)].sort(() => Math.random() - 0.5);
+  }, [model?.target]);
+
+  if (!model) return null;
+
+  return (
+    <div className="rounded-sm border border-secondary/40 bg-secondary/5 p-3">
+      <p className="hud flex items-center gap-1.5 text-[10px] text-secondary">
+        <Lightbulb className="h-3.5 w-3.5" /> RESPONSE AID
+      </p>
+
+      {data.hint_target && (
+        <p className="mt-2 text-xs">
+          Frame your answer like this: <span className="text-secondary">{data.hint_target}</span>
+        </p>
+      )}
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Aim for: <span className="italic">“{model.translation}”</span>
+      </p>
+
+      <p className="hud mt-3 text-[9px] text-muted-foreground">WORD BANK — TAP TO BUILD A REPLY</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {bank.map((w) => (
+          <button
+            key={w}
+            type="button"
+            onClick={() => {
+              onWord(w);
+              void say(w);
+            }}
+            className="rounded-sm border border-secondary/50 bg-card px-2 py-1 text-sm"
+          >
+            {w}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={onClear}
+          className="hud rounded-sm px-2 py-1 text-[9px] text-muted-foreground"
+        >
+          CLEAR
+        </button>
+      </div>
+
+      {!showModel ? (
+        <button
+          type="button"
+          onClick={() => setShowModel(true)}
+          className="hud mt-3 text-[10px] text-primary"
+        >
+          SHOW A MODEL ANSWER →
+        </button>
+      ) : (
+        <div className="mt-3 border-t border-secondary/30 pt-2">
+          <p className="text-base">
+            <Glossed text={model.target} locale={locale} />
+          </p>
+          <p className="mt-1 text-xs italic opacity-70">{model.translation}</p>
+          <button
+            type="button"
+            onClick={() => void say(model.target, 0.85)}
+            className="hud mt-2 flex items-center gap-1 text-[10px] text-secondary"
+          >
+            <Volume2 className="h-3 w-3" /> HEAR IT SLOWLY
+          </button>
+          {data.expected_answers.length > 1 && (
+            <ul className="mt-2 space-y-1">
+              {data.expected_answers.slice(1, 3).map((a) => (
+                <li key={a.target} className="text-xs text-muted-foreground">
+                  or “{a.target}”
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -418,13 +535,27 @@ export function StsStep({ data, locale, onDone }: Props & { data: Sts }) {
       <div className="paper-card p-4">
         <p className="hud text-[10px] text-destructive">{data.ai_character.toUpperCase()}</p>
         <p className="mt-1 text-xs italic opacity-70">{data.scenario_context}</p>
-        <p className="mt-3 text-lg">{data.ai_prompt_target}</p>
+        <p className="mt-3 text-lg">
+          <Glossed text={data.ai_prompt_target} locale={locale} />
+        </p>
         <div className="mt-2">
           <Redaction text={data.ai_prompt_translation} />
         </div>
       </div>
 
       <PlayButton text={data.ai_prompt_target} locale={locale} label="REPLAY PROMPT" />
+
+      {state !== "success" && (
+        <ResponseAid
+          data={data}
+          locale={locale}
+          onWord={(w) => {
+            setUseText(true);
+            setTyped((t) => (t ? `${t} ${w}` : w));
+          }}
+          onClear={() => setTyped("")}
+        />
+      )}
 
       {state === "struggle" && (
         <div className="rounded-sm border border-destructive/50 bg-destructive/10 p-3">
@@ -576,7 +707,9 @@ export function DictationStep({ data, locale, onDone }: Props & { data: Dictatio
                 </span>
               )}
             </p>
-            <p className="mt-2 text-base">{data.correct_transcription}</p>
+            <p className="mt-2 text-base">
+              <Glossed text={data.correct_transcription} locale={locale} />
+            </p>
             <div className="mt-2">
               <Redaction text={data.translation} />
             </div>

@@ -17,6 +17,7 @@ import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSessionRouteImport } from './routes/_authenticated/session'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
+import { Route as AuthenticatedSimulateRouteImport } from './routes/_authenticated/simulate'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedShopRoute = AuthenticatedShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSimulateRoute = AuthenticatedSimulateRouteImport.update({
+  id: '/simulate',
+  path: '/simulate',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
   id: '/vault',
   path: '/vault',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/session': typeof AuthenticatedSessionRoute
   '/shop': typeof AuthenticatedShopRoute
+  '/simulate': typeof AuthenticatedSimulateRoute
   '/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/session': typeof AuthenticatedSessionRoute
   '/shop': typeof AuthenticatedShopRoute
+  '/simulate': typeof AuthenticatedSimulateRoute
   '/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRoutesById {
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/session': typeof AuthenticatedSessionRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
+  '/_authenticated/simulate': typeof AuthenticatedSimulateRoute
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/session'
     | '/shop'
+    | '/simulate'
     | '/vault'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/session'
     | '/shop'
+    | '/simulate'
     | '/vault'
   id:
     | '__root__'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/session'
     | '/_authenticated/shop'
+    | '/_authenticated/simulate'
     | '/_authenticated/vault'
   fileRoutesById: FileRoutesById
 }
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShopRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/simulate': {
+      id: '/_authenticated/simulate'
+      path: '/simulate'
+      fullPath: '/simulate'
+      preLoaderRoute: typeof AuthenticatedSimulateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/vault': {
       id: '/_authenticated/vault'
       path: '/vault'
@@ -210,6 +229,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSessionRoute: typeof AuthenticatedSessionRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
+  AuthenticatedSimulateRoute: typeof AuthenticatedSimulateRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
 }
 
@@ -219,6 +239,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSessionRoute: AuthenticatedSessionRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
+  AuthenticatedSimulateRoute: AuthenticatedSimulateRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
 }
 
