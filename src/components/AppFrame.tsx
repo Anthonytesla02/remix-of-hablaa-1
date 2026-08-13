@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useHydrated } from "@tanstack/react-router";
-import { Flame, Map, Archive, Trophy, Package, IdCard } from "lucide-react";
+import { Flame, Map, Archive, Radio, Trophy, Package, IdCard } from "lucide-react";
 import type { ReactNode } from "react";
 import { useApp, useClearance } from "@/lib/store";
 
 const TABS = [
   { to: "/dashboard", label: "Map", icon: Map },
+  { to: "/simulate", label: "Sim", icon: Radio },
   { to: "/vault", label: "Vault", icon: Archive },
   { to: "/league", label: "League", icon: Trophy },
   { to: "/shop", label: "Supply", icon: Package },
@@ -49,7 +50,7 @@ export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="sticky bottom-0 z-20 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {TABS.map((t) => {
           const active = pathname === t.to;
           const Icon = t.icon;
