@@ -295,11 +295,13 @@ export class Ambience {
 
   setVolume(v: number) {
     this.volume = v;
+    if (this.el) this.el.volume = Math.min(1, v * this.elLevel);
     if (this.master && this.ctx) this.master.gain.value = v;
   }
 
   /** Duck the bed while the character speaks, so speech stays intelligible. */
   duck(on: boolean) {
+    if (this.el) this.el.volume = Math.min(1, this.volume * this.elLevel * (on ? 0.35 : 1));
     if (!this.master || !this.ctx) return;
     const target = on ? this.volume * 0.35 : this.volume;
     this.master.gain.cancelScheduledValues(this.ctx.currentTime);
@@ -309,6 +311,15 @@ export class Ambience {
   stop() {
     this.timers.forEach(clearTimeout);
     this.timers = [];
+    if (this.el) {
+      try {
+        this.el.pause();
+        this.el.src = "";
+      } catch {
+        /* noop */
+      }
+      this.el = null;
+    }
     try {
       this.bed?.stop();
     } catch {
@@ -319,5 +330,6 @@ export class Ambience {
     const ctx = this.ctx;
     this.ctx = null;
     void ctx?.close().catch(() => {});
+
   }
 }
