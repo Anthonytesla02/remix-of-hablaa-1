@@ -126,20 +126,41 @@ function noiseBuffer(ctx: AudioContext, seconds = 3) {
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
+/** Real recorded loops (preferred over the procedural bed when present). */
+const SAMPLES: Partial<Record<AmbienceId, { url: string; level: number }>> = {
+  cafe: { url: cafeAmbience.url, level: 0.45 },
+};
+
 export class Ambience {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private bed: AudioBufferSourceNode | null = null;
   private noise: AudioBuffer | null = null;
+  private el: HTMLAudioElement | null = null;
+  private elLevel = 1;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private volume = 0.7;
 
   get running() {
-    return this.ctx !== null;
+    return this.ctx !== null || this.el !== null;
   }
 
   async start(id: AmbienceId) {
     this.stop();
+
+    const sample = SAMPLES[id];
+    if (sample && typeof window !== "undefined") {
+      const el = new Audio(sample.url);
+      el.loop = true;
+      el.preload = "auto";
+      el.crossOrigin = "anonymous";
+      this.el = el;
+      this.elLevel = sample.level;
+      el.volume = Math.min(1, this.volume * sample.level);
+      await el.play().catch(() => {});
+      return;
+    }
+
     const Ctor =
       typeof window === "undefined"
         ? undefined
@@ -150,6 +171,7 @@ export class Ambience {
     await ctx.resume().catch(() => {});
     this.ctx = ctx;
     this.noise = noiseBuffer(ctx);
+
 
     const master = ctx.createGain();
     master.gain.value = this.volume;
