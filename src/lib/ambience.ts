@@ -1,8 +1,9 @@
 /**
- * Procedural ambient soundscapes (Web Audio) — no external audio assets.
- * Each setting layers a filtered noise bed plus randomised "events"
- * (cup clinks, PA chimes, distant chatter swells, engine rumble, music pulse).
+ * Ambient soundscapes. Recorded loops where available (café), otherwise a
+ * procedural Web Audio bed plus randomised events (clinks, chimes, rumble).
  */
+import cafeAmbience from "@/assets/cafe-ambience.mp3.asset.json";
+
 
 export type AmbienceId =
   | "cafe"
