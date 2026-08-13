@@ -1,8 +1,9 @@
 /**
- * Procedural ambient soundscapes (Web Audio) — no external audio assets.
- * Each setting layers a filtered noise bed plus randomised "events"
- * (cup clinks, PA chimes, distant chatter swells, engine rumble, music pulse).
+ * Ambient soundscapes. Recorded loops where available (café), otherwise a
+ * procedural Web Audio bed plus randomised events (clinks, chimes, rumble).
  */
+import cafeAmbience from "@/assets/cafe-ambience.mp3.asset.json";
+
 
 export type AmbienceId =
   | "cafe"
@@ -126,20 +127,41 @@ function noiseBuffer(ctx: AudioContext, seconds = 3) {
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
+/** Real recorded loops (preferred over the procedural bed when present). */
+const SAMPLES: Partial<Record<AmbienceId, { url: string; level: number }>> = {
+  cafe: { url: cafeAmbience.url, level: 0.45 },
+};
+
 export class Ambience {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private bed: AudioBufferSourceNode | null = null;
   private noise: AudioBuffer | null = null;
+  private el: HTMLAudioElement | null = null;
+  private elLevel = 1;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private volume = 0.7;
 
   get running() {
-    return this.ctx !== null;
+    return this.ctx !== null || this.el !== null;
   }
 
   async start(id: AmbienceId) {
     this.stop();
+
+    const sample = SAMPLES[id];
+    if (sample && typeof window !== "undefined") {
+      const el = new Audio(sample.url);
+      el.loop = true;
+      el.preload = "auto";
+      el.crossOrigin = "anonymous";
+      this.el = el;
+      this.elLevel = sample.level;
+      el.volume = Math.min(1, this.volume * sample.level);
+      await el.play().catch(() => {});
+      return;
+    }
+
     const Ctor =
       typeof window === "undefined"
         ? undefined
@@ -150,6 +172,7 @@ export class Ambience {
     await ctx.resume().catch(() => {});
     this.ctx = ctx;
     this.noise = noiseBuffer(ctx);
+
 
     const master = ctx.createGain();
     master.gain.value = this.volume;
@@ -272,11 +295,13 @@ export class Ambience {
 
   setVolume(v: number) {
     this.volume = v;
+    if (this.el) this.el.volume = Math.min(1, v * this.elLevel);
     if (this.master && this.ctx) this.master.gain.value = v;
   }
 
   /** Duck the bed while the character speaks, so speech stays intelligible. */
   duck(on: boolean) {
+    if (this.el) this.el.volume = Math.min(1, this.volume * this.elLevel * (on ? 0.35 : 1));
     if (!this.master || !this.ctx) return;
     const target = on ? this.volume * 0.35 : this.volume;
     this.master.gain.cancelScheduledValues(this.ctx.currentTime);
@@ -286,6 +311,15 @@ export class Ambience {
   stop() {
     this.timers.forEach(clearTimeout);
     this.timers = [];
+    if (this.el) {
+      try {
+        this.el.pause();
+        this.el.src = "";
+      } catch {
+        /* noop */
+      }
+      this.el = null;
+    }
     try {
       this.bed?.stop();
     } catch {
@@ -296,5 +330,6 @@ export class Ambience {
     const ctx = this.ctx;
     this.ctx = null;
     void ctx?.close().catch(() => {});
+
   }
 }
