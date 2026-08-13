@@ -8,8 +8,9 @@ const Turn = z.object({
 
 const SimInput = z.object({
   language: z.string().min(2).max(40),
-  setting: z.string().min(2).max(60),
-  character: z.string().min(2).max(60),
+  setting: z.string().min(2).max(300),
+  character: z.string().min(2).max(120),
+
   level: z.string().min(1).max(40).default("absolute beginner"),
   history: z.array(Turn).max(40).default([]),
   userText: z.string().max(600).default(""),
