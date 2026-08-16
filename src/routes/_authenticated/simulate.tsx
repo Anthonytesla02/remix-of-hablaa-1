@@ -243,17 +243,22 @@ function SimulatePage() {
     setThinking(true);
     setSuggestions([]);
     try {
+      const exchanges = currentHistory.filter((m) => m.role === "user").length + 1;
       const reply = await simulateTurn({
         data: {
           language,
           setting: scene.setting,
           character: scene.character,
+          goals: scene.goals,
+          minExchanges: scene.minExchanges,
+          exchanges,
           level: "beginner",
           history: currentHistory.map((m) => ({ role: m.role, text: m.text })),
           userText,
         },
       });
       setStage(reply.stage_direction);
+      setObjective(reply.objective);
       setSuggestions(reply.suggestions);
       setMsgs((m) => {
         const next = [...m];
@@ -269,7 +274,22 @@ function SimulatePage() {
         return next;
       });
       setTurns((t) => t + 1);
-      if (reply.ended) setEnded(true);
+      if (reply.handler_note) {
+        handlerSay(
+          reply.handler_note,
+          reply.feedback?.verdict === "good"
+            ? "proud"
+            : reply.feedback?.verdict === "unclear"
+              ? "tough"
+              : "nudge",
+        );
+      } else if (reply.feedback?.verdict === "good") {
+        handlerReact("simGood", "proud");
+      }
+      if (reply.ended) {
+        setEnded(true);
+        handlerReact("simEnd", "hype");
+      }
       void speakCharacter(reply.reply);
     } finally {
       setThinking(false);
@@ -282,22 +302,28 @@ function SimulatePage() {
     setEnded(false);
     setTurns(0);
     setStage("");
+    setObjective("");
     const amb = new Ambience();
     ambienceRef.current = amb;
     if (!muted) await amb.start(s.id);
     setThinking(true);
+    handlerReact("simStart", "nudge");
     try {
       const reply = await simulateTurn({
         data: {
           language,
           setting: s.setting,
           character: s.character,
+          goals: s.goals,
+          minExchanges: s.minExchanges,
+          exchanges: 0,
           level: "beginner",
           history: [],
           userText: "",
         },
       });
       setStage(reply.stage_direction);
+      setObjective(reply.objective);
       setSuggestions(reply.suggestions);
       setMsgs([{ role: "character", text: reply.reply, translation: reply.reply_translation }]);
       void speakCharacter(reply.reply);
@@ -305,6 +331,7 @@ function SimulatePage() {
       setThinking(false);
     }
   }
+
 
   function sendText(text: string) {
     const clean = text.trim();
