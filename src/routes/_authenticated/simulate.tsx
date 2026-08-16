@@ -24,6 +24,7 @@ import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { bcp47, langById } from "@/lib/content";
+import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { listenOnce, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
@@ -199,6 +200,7 @@ function SimulatePage() {
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
+  const [objective, setObjective] = useState("");
   const [suggestions, setSuggestions] = useState<{ target: string; translation: string }[]>([]);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
