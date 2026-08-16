@@ -57,6 +57,8 @@ type Scene = {
   label: string;
   character: string;
   setting: string;
+  goals: string[];
+  minExchanges: number;
   icon: typeof Coffee;
 };
 
@@ -66,6 +68,14 @@ const SCENES: Scene[] = [
     label: "Café",
     character: "barista behind the counter",
     setting: "a busy neighbourhood café at mid-morning; the learner is ordering",
+    goals: [
+      "greeting and how the learner's day is going",
+      "asking what the learner wants, size and milk",
+      "recommending the pastry of the day and taking that order",
+      "a small complication: the card machine is slow or a drink has run out",
+      "name for the cup, paying, and a warm goodbye",
+    ],
+    minExchanges: 10,
     icon: Coffee,
   },
   {
@@ -73,6 +83,14 @@ const SCENES: Scene[] = [
     label: "Restaurant",
     character: "waiter taking an order",
     setting: "a small family restaurant at dinner service; the learner is being seated and ordering",
+    goals: [
+      "greeting, how many people, choosing a table",
+      "drinks and today's specials",
+      "starters and mains, with a recommendation",
+      "an allergy or substitution question",
+      "dessert or coffee, then the bill and goodbye",
+    ],
+    minExchanges: 12,
     icon: UtensilsCrossed,
   },
   {
@@ -80,6 +98,14 @@ const SCENES: Scene[] = [
     label: "Party",
     character: "friendly stranger at a house party",
     setting: "a crowded house party with music; small talk and introductions",
+    goals: [
+      "introductions and how each of you knows the host",
+      "where you're both from and what you do",
+      "hobbies, music and the weekend",
+      "an invitation or plan for later",
+      "swapping contacts and a goodbye",
+    ],
+    minExchanges: 12,
     icon: PartyPopper,
   },
   {
@@ -87,6 +113,14 @@ const SCENES: Scene[] = [
     label: "Train station",
     character: "ticket office clerk",
     setting: "a main railway station; the learner needs a ticket and platform information",
+    goals: [
+      "greeting and destination",
+      "date, time and one-way or return",
+      "class, seat and price",
+      "a complication: that train is full or delayed, so pick another",
+      "platform, transfers and goodbye",
+    ],
+    minExchanges: 10,
     icon: TrainFront,
   },
   {
@@ -94,6 +128,14 @@ const SCENES: Scene[] = [
     label: "Airport",
     character: "check-in and border agent",
     setting: "an international airport terminal; check-in, baggage and arrival questions",
+    goals: [
+      "greeting, destination and documents",
+      "baggage: how many bags, weight, carry-on",
+      "seat preference and boarding details",
+      "border questions: purpose of trip, length of stay, where you're staying",
+      "final instructions and goodbye",
+    ],
+    minExchanges: 12,
     icon: Plane,
   },
   {
@@ -101,6 +143,14 @@ const SCENES: Scene[] = [
     label: "Market",
     character: "market stall vendor",
     setting: "an open-air food market; buying produce, asking prices and quantities",
+    goals: [
+      "greeting and what's fresh today",
+      "prices and quantities",
+      "asking what to cook with it",
+      "haggling or asking for a little extra",
+      "paying, change and goodbye",
+    ],
+    minExchanges: 10,
     icon: ShoppingBasket,
   },
   {
@@ -108,6 +158,14 @@ const SCENES: Scene[] = [
     label: "Taxi",
     character: "taxi driver",
     setting: "the back seat of a taxi in traffic; giving a destination and chatting",
+    goals: [
+      "destination and rough fare",
+      "route choice and traffic",
+      "small talk: where you're from, how long you're staying",
+      "the driver's tips about the city",
+      "arriving, paying and goodbye",
+    ],
+    minExchanges: 10,
     icon: Car,
   },
   {
@@ -115,9 +173,18 @@ const SCENES: Scene[] = [
     label: "Hotel",
     character: "hotel receptionist",
     setting: "a quiet hotel lobby; checking in, asking about the room and the area",
+    goals: [
+      "greeting, name and reservation",
+      "documents, nights and room type",
+      "breakfast times, wifi and facilities",
+      "a small problem with the room or a request",
+      "directions in the neighbourhood, then goodbye",
+    ],
+    minExchanges: 12,
     icon: BedDouble,
   },
 ];
+
 
 type Msg = {
   role: "user" | "character";
