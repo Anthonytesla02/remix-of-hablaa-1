@@ -193,3 +193,36 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+@keyframes handler-pop {
+  0% {
+    transform: translateY(8px) scale(0.9);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(0) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@utility handler-pop {
+  animation: handler-pop 260ms ease-out both;
+}
+
+@keyframes handler-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@utility handler-idle {
+  animation: handler-bob 3.2s ease-in-out infinite;
+}

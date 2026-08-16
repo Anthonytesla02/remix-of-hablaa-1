@@ -4,7 +4,7 @@ import avatar from "@/assets/handler-avatar.png";
 import { useHandler, type Mood } from "@/lib/handler-bus";
 
 const MOOD_RING: Record<Mood, string> = {
-  hype: "border-primary shadow-[0_0_18px_hsl(var(--primary)/0.45)]",
+  hype: "border-primary ring-2 ring-primary/40",
   proud: "border-primary",
   nudge: "border-secondary",
   tough: "border-destructive",
