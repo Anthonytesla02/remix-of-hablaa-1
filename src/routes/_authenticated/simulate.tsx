@@ -231,7 +231,7 @@ function SimulatePage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [msgs, thinking]);
 
-  const history = useMemo(() => msgs.map((m) => ({ role: m.role, text: m.text })), [msgs]);
+  
 
   async function speakCharacter(text: string) {
     if (muted) return;
@@ -449,6 +449,16 @@ function SimulatePage() {
       </div>
 
       {stage && <p className="mt-3 text-[11px] italic text-muted-foreground">{stage}</p>}
+
+      {objective && !ended && (
+        <div className="mt-2 rounded-sm border border-primary/40 bg-primary/5 px-2.5 py-2">
+          <p className="hud text-[9px] text-primary">YOUR OBJECTIVE</p>
+          <p className="mt-0.5 text-[11px]">{objective}</p>
+          <p className="hud mt-1 text-[8px] text-muted-foreground">
+            EXCHANGE {turns} / {scene.minExchanges} MINIMUM
+          </p>
+        </div>
+      )}
 
       <div className="mt-3 space-y-3">
         {msgs.map((m, i) =>
