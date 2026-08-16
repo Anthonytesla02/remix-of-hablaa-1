@@ -10,9 +10,12 @@ const SimInput = z.object({
   language: z.string().min(2).max(40),
   setting: z.string().min(2).max(300),
   character: z.string().min(2).max(120),
+  goals: z.array(z.string().max(160)).max(8).default([]),
+  minExchanges: z.number().int().min(2).max(30).default(10),
+  exchanges: z.number().int().min(0).max(200).default(0),
 
   level: z.string().min(1).max(40).default("absolute beginner"),
-  history: z.array(Turn).max(40).default([]),
+  history: z.array(Turn).max(120).default([]),
   userText: z.string().max(600).default(""),
 });
 
