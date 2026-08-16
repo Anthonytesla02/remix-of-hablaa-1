@@ -98,6 +98,8 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
                   type="button"
                   onClick={() => {
                     setPicked(o.id);
+                    handlerReact(o.id === data.correct_option_id ? "correct" : "wrong",
+                      o.id === data.correct_option_id ? "hype" : "tough");
                     void say(o.target);
                   }}
                   className="block w-full px-3 pt-3 text-left text-base"
