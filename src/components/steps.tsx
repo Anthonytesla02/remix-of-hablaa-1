@@ -6,6 +6,7 @@ import { Glossed } from "@/components/Glossed";
 import { evaluateResponse, listenOnce, normalize, sttSupported } from "@/lib/speech";
 import { gradePronunciation } from "@/lib/pronunciation.functions";
 import { useAudioRecorder } from "@/lib/audio-recorder";
+import { handlerReact } from "@/lib/handler-bus";
 import type { Step } from "@/lib/session";
 import type { Dictation, Mcq, PatternDrill, Shadow, Sts } from "@/lib/content";
 import type { SrsCard } from "@/lib/srs";
