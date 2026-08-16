@@ -10,9 +10,12 @@ const SimInput = z.object({
   language: z.string().min(2).max(40),
   setting: z.string().min(2).max(300),
   character: z.string().min(2).max(120),
+  goals: z.array(z.string().max(160)).max(8).default([]),
+  minExchanges: z.number().int().min(2).max(30).default(10),
+  exchanges: z.number().int().min(0).max(200).default(0),
 
   level: z.string().min(1).max(40).default("absolute beginner"),
-  history: z.array(Turn).max(40).default([]),
+  history: z.array(Turn).max(120).default([]),
   userText: z.string().max(600).default(""),
 });
 
@@ -22,6 +25,8 @@ export type SimReply = {
   stage_direction: string;
   suggestions: { target: string; translation: string }[];
   feedback: { verdict: "good" | "understandable" | "unclear"; note: string } | null;
+  objective: string;
+  handler_note: string;
   ended: boolean;
 };
 
@@ -31,6 +36,8 @@ const FALLBACK: SimReply = {
   stage_direction: "Connection unstable.",
   suggestions: [],
   feedback: null,
+  objective: "",
+  handler_note: "",
   ended: false,
 };
 
@@ -43,23 +50,31 @@ export const simulateTurn = createServerFn({ method: "POST" })
 
     const system = `You role-play a realistic ${data.character} in this setting: ${data.setting}.
 You speak ONLY ${data.language}, naturally but simply, calibrated for a ${data.level} learner.
-Keep every line to 1-2 short sentences. Stay in character, react to what the learner actually said,
-ask follow-up questions, and let the conversation progress like a real interaction
-(greeting -> the transaction/small talk -> a natural close).
-The learner may also ask YOU questions — answer them in character.
+Keep every line to 1-3 short sentences. Stay in character, react to what the learner actually said,
+ask follow-up questions, and drive a LONG, layered interaction — not a two-line transaction.
+The learner may also ask YOU questions — answer them in character, with a small human detail each time.
+
+Scene beats to work through in order, taking several exchanges each:
+${(data.goals.length ? data.goals : ["greeting and small talk", "the main business of the scene", "a complication or extra question", "recommendations or opinions", "settling up and a natural goodbye"]).map((g, i) => `${i + 1}. ${g}`).join("\n")}
+
+So far there have been ${data.exchanges} exchanges. Do NOT wrap up before ${data.minExchanges} exchanges:
+if the current beat is finished, introduce the next beat, a small complication, or a new question of your own.
 
 Reply with ONLY JSON matching:
 {"reply":string,"reply_translation":string,"stage_direction":string,
  "suggestions":[{"target":string,"translation":string}],
  "feedback":{"verdict":"good"|"understandable"|"unclear","note":string} | null,
- "ended":boolean}
+ "objective":string,"handler_note":string,"ended":boolean}
 
 Rules:
 - "reply" = your next line, in ${data.language} only. "reply_translation" = English.
-- "stage_direction" = one short English sentence of scene detail (what is happening around them).
-- "suggestions" = 3 SHORT things the learner could say next in ${data.language}, each with an English translation. Vary them: at least one should be a question the learner asks you.
+- "stage_direction" = one short English sentence of sensory scene detail (sounds, smells, what people nearby are doing). Vary it every turn.
+- "suggestions" = 3 SHORT things the learner could say next in ${data.language}, each with an English translation. At least one must be a question the learner asks you, and at least one must push the scene forward.
 - "feedback" = null on the opening line; otherwise a one-sentence English coaching note on the learner's last message (grammar/word choice/naturalness). Be encouraging and specific.
-- "ended" = true only when the interaction has reached a natural goodbye.`;
+- "objective" = a short English line telling the learner what to accomplish in this beat (e.g. "Ask what she recommends, then order it").
+- "handler_note" = one short, warm, slightly wry English aside from the learner's coach about how they are doing. One sentence.
+- "ended" = true ONLY after at least ${data.minExchanges} exchanges AND a real goodbye has happened.`;
+
 
     const convo = data.history.map((t) => ({
       role: t.role === "user" ? ("user" as const) : ("assistant" as const),

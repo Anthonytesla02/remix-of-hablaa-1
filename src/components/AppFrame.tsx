@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useHydrated } from "@tanstack/react-router";
 import { Flame, Map, Archive, Radio, Trophy, Package, IdCard } from "lucide-react";
 import type { ReactNode } from "react";
+import { HandlerAvatar } from "@/components/Handler";
 import { useApp, useClearance } from "@/lib/store";
 
 const TABS = [
@@ -79,6 +80,7 @@ export function AppFrame({ children, tabs = true }: { children: ReactNode; tabs?
       {tabs && <HudBar />}
       <main className="flex-1 px-4 pb-6 pt-4">{children}</main>
       {tabs && <TabBar />}
+      <HandlerAvatar offset={tabs} />
     </div>
   );
 }

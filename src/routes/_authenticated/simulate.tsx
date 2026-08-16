@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Coffee,
   UtensilsCrossed,
@@ -24,6 +24,7 @@ import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { bcp47, langById } from "@/lib/content";
+import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { listenOnce, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
@@ -57,6 +58,8 @@ type Scene = {
   label: string;
   character: string;
   setting: string;
+  goals: string[];
+  minExchanges: number;
   icon: typeof Coffee;
 };
 
@@ -66,6 +69,14 @@ const SCENES: Scene[] = [
     label: "Café",
     character: "barista behind the counter",
     setting: "a busy neighbourhood café at mid-morning; the learner is ordering",
+    goals: [
+      "greeting and how the learner's day is going",
+      "asking what the learner wants, size and milk",
+      "recommending the pastry of the day and taking that order",
+      "a small complication: the card machine is slow or a drink has run out",
+      "name for the cup, paying, and a warm goodbye",
+    ],
+    minExchanges: 10,
     icon: Coffee,
   },
   {
@@ -73,6 +84,14 @@ const SCENES: Scene[] = [
     label: "Restaurant",
     character: "waiter taking an order",
     setting: "a small family restaurant at dinner service; the learner is being seated and ordering",
+    goals: [
+      "greeting, how many people, choosing a table",
+      "drinks and today's specials",
+      "starters and mains, with a recommendation",
+      "an allergy or substitution question",
+      "dessert or coffee, then the bill and goodbye",
+    ],
+    minExchanges: 12,
     icon: UtensilsCrossed,
   },
   {
@@ -80,6 +99,14 @@ const SCENES: Scene[] = [
     label: "Party",
     character: "friendly stranger at a house party",
     setting: "a crowded house party with music; small talk and introductions",
+    goals: [
+      "introductions and how each of you knows the host",
+      "where you're both from and what you do",
+      "hobbies, music and the weekend",
+      "an invitation or plan for later",
+      "swapping contacts and a goodbye",
+    ],
+    minExchanges: 12,
     icon: PartyPopper,
   },
   {
@@ -87,6 +114,14 @@ const SCENES: Scene[] = [
     label: "Train station",
     character: "ticket office clerk",
     setting: "a main railway station; the learner needs a ticket and platform information",
+    goals: [
+      "greeting and destination",
+      "date, time and one-way or return",
+      "class, seat and price",
+      "a complication: that train is full or delayed, so pick another",
+      "platform, transfers and goodbye",
+    ],
+    minExchanges: 10,
     icon: TrainFront,
   },
   {
@@ -94,6 +129,14 @@ const SCENES: Scene[] = [
     label: "Airport",
     character: "check-in and border agent",
     setting: "an international airport terminal; check-in, baggage and arrival questions",
+    goals: [
+      "greeting, destination and documents",
+      "baggage: how many bags, weight, carry-on",
+      "seat preference and boarding details",
+      "border questions: purpose of trip, length of stay, where you're staying",
+      "final instructions and goodbye",
+    ],
+    minExchanges: 12,
     icon: Plane,
   },
   {
@@ -101,6 +144,14 @@ const SCENES: Scene[] = [
     label: "Market",
     character: "market stall vendor",
     setting: "an open-air food market; buying produce, asking prices and quantities",
+    goals: [
+      "greeting and what's fresh today",
+      "prices and quantities",
+      "asking what to cook with it",
+      "haggling or asking for a little extra",
+      "paying, change and goodbye",
+    ],
+    minExchanges: 10,
     icon: ShoppingBasket,
   },
   {
@@ -108,6 +159,14 @@ const SCENES: Scene[] = [
     label: "Taxi",
     character: "taxi driver",
     setting: "the back seat of a taxi in traffic; giving a destination and chatting",
+    goals: [
+      "destination and rough fare",
+      "route choice and traffic",
+      "small talk: where you're from, how long you're staying",
+      "the driver's tips about the city",
+      "arriving, paying and goodbye",
+    ],
+    minExchanges: 10,
     icon: Car,
   },
   {
@@ -115,9 +174,18 @@ const SCENES: Scene[] = [
     label: "Hotel",
     character: "hotel receptionist",
     setting: "a quiet hotel lobby; checking in, asking about the room and the area",
+    goals: [
+      "greeting, name and reservation",
+      "documents, nights and room type",
+      "breakfast times, wifi and facilities",
+      "a small problem with the room or a request",
+      "directions in the neighbourhood, then goodbye",
+    ],
+    minExchanges: 12,
     icon: BedDouble,
   },
 ];
+
 
 type Msg = {
   role: "user" | "character";
@@ -132,6 +200,7 @@ function SimulatePage() {
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
+  const [objective, setObjective] = useState("");
   const [suggestions, setSuggestions] = useState<{ target: string; translation: string }[]>([]);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
@@ -162,7 +231,7 @@ function SimulatePage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [msgs, thinking]);
 
-  const history = useMemo(() => msgs.map((m) => ({ role: m.role, text: m.text })), [msgs]);
+  
 
   async function speakCharacter(text: string) {
     if (muted) return;
@@ -176,17 +245,22 @@ function SimulatePage() {
     setThinking(true);
     setSuggestions([]);
     try {
+      const exchanges = currentHistory.filter((m) => m.role === "user").length + 1;
       const reply = await simulateTurn({
         data: {
           language,
           setting: scene.setting,
           character: scene.character,
+          goals: scene.goals,
+          minExchanges: scene.minExchanges,
+          exchanges,
           level: "beginner",
           history: currentHistory.map((m) => ({ role: m.role, text: m.text })),
           userText,
         },
       });
       setStage(reply.stage_direction);
+      setObjective(reply.objective);
       setSuggestions(reply.suggestions);
       setMsgs((m) => {
         const next = [...m];
@@ -202,7 +276,22 @@ function SimulatePage() {
         return next;
       });
       setTurns((t) => t + 1);
-      if (reply.ended) setEnded(true);
+      if (reply.handler_note) {
+        handlerSay(
+          reply.handler_note,
+          reply.feedback?.verdict === "good"
+            ? "proud"
+            : reply.feedback?.verdict === "unclear"
+              ? "tough"
+              : "nudge",
+        );
+      } else if (reply.feedback?.verdict === "good") {
+        handlerReact("simGood", "proud");
+      }
+      if (reply.ended) {
+        setEnded(true);
+        handlerReact("simEnd", "hype");
+      }
       void speakCharacter(reply.reply);
     } finally {
       setThinking(false);
@@ -215,22 +304,28 @@ function SimulatePage() {
     setEnded(false);
     setTurns(0);
     setStage("");
+    setObjective("");
     const amb = new Ambience();
     ambienceRef.current = amb;
     if (!muted) await amb.start(s.id);
     setThinking(true);
+    handlerReact("simStart", "nudge");
     try {
       const reply = await simulateTurn({
         data: {
           language,
           setting: s.setting,
           character: s.character,
+          goals: s.goals,
+          minExchanges: s.minExchanges,
+          exchanges: 0,
           level: "beginner",
           history: [],
           userText: "",
         },
       });
       setStage(reply.stage_direction);
+      setObjective(reply.objective);
       setSuggestions(reply.suggestions);
       setMsgs([{ role: "character", text: reply.reply, translation: reply.reply_translation }]);
       void speakCharacter(reply.reply);
@@ -238,6 +333,7 @@ function SimulatePage() {
       setThinking(false);
     }
   }
+
 
   function sendText(text: string) {
     const clean = text.trim();
@@ -353,6 +449,16 @@ function SimulatePage() {
       </div>
 
       {stage && <p className="mt-3 text-[11px] italic text-muted-foreground">{stage}</p>}
+
+      {objective && !ended && (
+        <div className="mt-2 rounded-sm border border-primary/40 bg-primary/5 px-2.5 py-2">
+          <p className="hud text-[9px] text-primary">YOUR OBJECTIVE</p>
+          <p className="mt-0.5 text-[11px]">{objective}</p>
+          <p className="hud mt-1 text-[8px] text-muted-foreground">
+            EXCHANGE {turns} / {scene.minExchanges} MINIMUM
+          </p>
+        </div>
+      )}
 
       <div className="mt-3 space-y-3">
         {msgs.map((m, i) =>
