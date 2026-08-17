@@ -100,6 +100,49 @@ export function buildSession(opts: {
   ];
 }
 
+/** Build one interactive run of an authored Spanish Foundations lesson. */
+export function buildLessonSession(opts: {
+  lesson: CourseLesson;
+  cards: Record<string, SrsCard>;
+  lang: string;
+  reviewCap?: number;
+}): Step[] {
+  const { lesson, cards, lang, reviewCap = 6 } = opts;
+  const steps: Step[] = [{ kind: "teach", lesson }];
+
+  for (const act of lesson.activities) {
+    switch (activityMode(act)) {
+      case "choice":
+        steps.push({ kind: "choice", act });
+        break;
+      case "order":
+        steps.push({ kind: "order", act });
+        break;
+      case "match":
+        steps.push({ kind: "match", act });
+        break;
+      case "speak":
+        steps.push({ kind: "utter", act });
+        break;
+      case "roleplay":
+        steps.push({ kind: "roleplay", act, lesson });
+        break;
+      default:
+        steps.push({ kind: "write", act });
+    }
+  }
+
+  steps.push({ kind: "dialogue", lesson });
+
+  const reviews: Step[] = dueCards(cards, lang, reviewCap).map((c) => ({
+    kind: "review",
+    data: c,
+  }));
+  steps.push(...reviews);
+  steps.push({ kind: "exit", lesson });
+  return steps;
+}
+
 export function stepLabel(kind: Step["kind"]) {
   return {
     mcq: "Tactical Pattern Drill",
@@ -108,5 +151,15 @@ export function stepLabel(kind: Step["kind"]) {
     shadow: "Echo Protocol",
     sts: "Field Interrogation",
     dictation: "Blackout Dictation",
+    teach: "Field Briefing",
+    choice: "Signal Identification",
+    write: "Written Transmission",
+    order: "Syntax Reassembly",
+    match: "Cipher Match",
+    utter: "Voice Print Drill",
+    roleplay: "Live Contact",
+    dialogue: "Intercepted Dialogue",
+    exit: "Exit Check",
   }[kind];
 }
+
