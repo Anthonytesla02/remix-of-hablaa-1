@@ -1,5 +1,10 @@
 import type { Dictation, Mcq, MissionDay, PatternDrill, Shadow, Sts } from "@/lib/content";
 import { srsEngine } from "@/lib/content";
+import {
+  activityMode,
+  type CourseActivity,
+  type CourseLesson,
+} from "@/lib/course";
 import { dueCards, type SrsCard } from "@/lib/srs";
 
 export type Step =
@@ -8,7 +13,18 @@ export type Step =
   | { kind: "review"; data: SrsCard }
   | { kind: "shadow"; data: Shadow }
   | { kind: "sts"; data: Sts }
-  | { kind: "dictation"; data: Dictation };
+  | { kind: "dictation"; data: Dictation }
+  // Spanish Foundations course steps
+  | { kind: "teach"; lesson: CourseLesson }
+  | { kind: "choice"; act: CourseActivity }
+  | { kind: "write"; act: CourseActivity }
+  | { kind: "order"; act: CourseActivity }
+  | { kind: "match"; act: CourseActivity }
+  | { kind: "utter"; act: CourseActivity }
+  | { kind: "roleplay"; act: CourseActivity; lesson: CourseLesson }
+  | { kind: "dialogue"; lesson: CourseLesson }
+  | { kind: "exit"; lesson: CourseLesson };
+
 
 const TIER_MIX: Record<
   string,
