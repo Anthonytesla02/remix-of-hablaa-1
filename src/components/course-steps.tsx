@@ -316,6 +316,7 @@ export function ChoiceStep({ act, locale, onDone }: Props & { act: CourseActivit
               onDone({
                 correct: ok,
                 xp: ok ? (hint ? 6 : 12) : 0,
+                hinted: hint,
                 countsForAccuracy: true,
                 newContent: true,
               })
@@ -436,6 +437,7 @@ export function WriteStep({ act, locale, onDone }: Props & { act: CourseActivity
               onDone({
                 correct: state !== "miss",
                 xp: state === "ok" ? (hint ? 8 : 14) : state === "close" ? 6 : 0,
+                hinted: hint,
                 countsForAccuracy: true,
                 newContent: true,
               })
