@@ -66,3 +66,45 @@ export function dueCards(cards: Record<string, SrsCard>, lang: string, cap: numb
     .sort((a, b) => a.dueAt - b.dueAt)
     .slice(0, cap);
 }
+
+/* ── Manifest-driven ladder for authored course items ─────────────────
+   correct_no_hint → promote to next interval
+   hinted_answer   → retain current interval
+   wrong_answer    → same session + next day                            */
+
+export type Outcome = "correct" | "hinted" | "wrong";
+
+const LADDER = reviewSchedule.new_item_intervals_days;
+
+function ladderIndex(intervalDays: number) {
+  const i = LADDER.findIndex((d) => d >= intervalDays);
+  return i === -1 ? LADDER.length - 1 : i;
+}
+
+/** Schedule a card per the course manifest review schedule. */
+export function scheduleGraded(card: SrsCard, outcome: Outcome, now = Date.now()): SrsCard {
+  if (outcome === "wrong") {
+    return {
+      ...card,
+      ease: Math.max(
+        srsEngine.ease_factor_minimum,
+        card.ease - srsEngine.ease_factor_penalty_on_miss,
+      ),
+      intervalDays: 1,
+      dueAt: now + DAY,
+      reps: card.reps + 1,
+      lapses: card.lapses + 1,
+    };
+  }
+
+  const current = ladderIndex(card.intervalDays);
+  const next =
+    outcome === "hinted" ? current : Math.min(LADDER.length - 1, current + 1);
+  const days = LADDER[next] ?? 1;
+  return {
+    ...card,
+    intervalDays: days,
+    dueAt: now + Math.max(days, outcome === "hinted" ? 0 : 1) * DAY,
+    reps: card.reps + 1,
+  };
+}
