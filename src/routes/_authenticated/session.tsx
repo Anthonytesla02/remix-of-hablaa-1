@@ -4,7 +4,8 @@ import { X, ShieldAlert } from "lucide-react";
 import { Hydrated } from "@/components/AppFrame";
 import { StepRenderer, type StepResult } from "@/components/steps";
 import { bcp47, gamification, missionDays, onboarding } from "@/lib/content";
-import { buildSession, stepLabel, type Step } from "@/lib/session";
+import { courseKey, lessonById, lessonIdFromKey } from "@/lib/course";
+import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
 import { stopSpeaking } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/session")({
     day: String(s['day'] ?? ""),
     mode: (["mission", "review", "checkpoint"].includes(String(s['mode'])) ? s['mode'] : "mission") as Mode,
   }),
+
   head: () => ({
     meta: [
       { title: "Mission Session — Operation Lingua" },
@@ -54,8 +56,13 @@ function SessionPage() {
   const [startedAt] = useState(() => Date.now());
   const [finished, setFinished] = useState(false);
 
+  const lesson = useMemo(() => {
+    const id = lessonIdFromKey(dayKey);
+    return id ? lessonById(id) : undefined;
+  }, [dayKey]);
+
   const days = profile ? missionDays(profile.langId) : [];
-  const entry = days.find((d) => d.key === dayKey) ?? days[0];
+  const entry = lesson ? undefined : (days.find((d) => d.key === dayKey) ?? days[0]);
   const dueAtStart = useMemo(
     () => (profile ? dueCards(cards, profile.langId, 999).length : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,8 +72,12 @@ function SessionPage() {
   const [steps, setSteps] = useState<Step[]>([]);
 
   useEffect(() => {
-    if (!profile || !entry) return;
-    if (mode === "review") {
+    if (!profile) return;
+    if (lesson) {
+      setSteps(buildLessonSession({ lesson, cards, lang: profile.langId }));
+    } else if (!entry) {
+      return;
+    } else if (mode === "review") {
       const reviews = dueCards(cards, profile.langId, 40).map((c) => ({ kind: "review", data: c }) as Step);
       setSteps(reviews);
     } else {
@@ -82,13 +93,14 @@ function SessionPage() {
     }
     return () => stopSpeaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayKey, mode, profile?.langId]);
+  }, [dayKey, mode, profile?.langId, lesson?.id]);
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
   }, [profile, navigate]);
 
-  if (!profile || !entry) return null;
+  if (!profile || (!entry && !lesson)) return null;
+
 
   const locale = bcp47(profile.langId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === profile.tierId);
@@ -116,7 +128,8 @@ function SessionPage() {
 
     let remaining = steps.slice(index + 1);
     // Cover integrity at zero: restrict the rest of the session to review/shadowing.
-    if (nextCover === 0 && cover > 0) {
+    // Course lessons are never truncated — the learner needs the whole briefing.
+    if (!lesson && nextCover === 0 && cover > 0) {
       remaining = remaining.filter((x) => x.kind === "review" || x.kind === "shadow");
       setSteps([...steps.slice(0, index + 1), ...remaining]);
     }
@@ -134,13 +147,21 @@ function SessionPage() {
       (finalXp + bonus) * (perfect ? (gamification.xp_rules.perfect_session_multiplier as number) : 1),
     );
 
-    if (mode !== "review") seedCards(entry!.day.new_items, profile!.langId);
+    if (lesson) {
+      seedCards(
+        lesson.vocabulary.map((v) => ({ id: `${lesson.id}:${v.id}`, target: v.es, translation: v.en })),
+        profile!.langId,
+      );
+    } else if (mode !== "review") {
+      seedCards(entry!.day.new_items, profile!.langId);
+    }
 
     const minutes = (Date.now() - startedAt) / 60000;
     completeSession(
       {
         date: Date.now(),
-        dayKey: mode === "review" ? "review" : entry!.key,
+        dayKey: lesson ? courseKey(lesson.id) : mode === "review" ? "review" : entry!.key,
+
         xp: awarded,
         accuracy,
         items: finalGraded,

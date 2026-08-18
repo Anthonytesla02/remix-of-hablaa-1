@@ -5,6 +5,8 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { PlayButton } from "@/components/Audio";
 import { Glossed } from "@/components/Glossed";
 import { arcTitle, bcp47, missionDays } from "@/lib/content";
+import { courseKey, courseLessons, hasCourse } from "@/lib/course";
+
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { useApp } from "@/lib/store";
 import type { SrsCard } from "@/lib/srs";
@@ -76,6 +78,20 @@ function VaultPage() {
       });
     }
 
+    for (const lesson of hasCourse(profile.langId) ? courseLessons : []) {
+      const deckCards = lesson.vocabulary
+        .map((v) => byId.get(`${lesson.id}:${v.id}`))
+        .filter((c): c is SrsCard => Boolean(c));
+      if (deckCards.length === 0) continue;
+      out.push({
+        id: courseKey(lesson.id),
+        label: lesson.title,
+        sub: `Week ${lesson.week} · Day ${lesson.day} · ${lesson.focus}`,
+        cards: deckCards,
+        due: deckCards.filter((c) => c.dueAt <= now).length,
+      });
+    }
+
     for (const entry of missionDays(profile.langId)) {
       const deckCards = entry.day.new_items
         .map((it) => byId.get(it.id))
@@ -89,6 +105,7 @@ function VaultPage() {
         due: deckCards.filter((c) => c.dueAt <= now).length,
       });
     }
+
 
     if (mine.length > 0) {
       out.push({
