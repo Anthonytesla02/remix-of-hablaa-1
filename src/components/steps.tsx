@@ -750,5 +750,24 @@ export function StepRenderer({ step, locale, onDone }: Props & { step: Step }) {
       return <StsStep data={step.data} locale={locale} onDone={onDone} />;
     case "dictation":
       return <DictationStep data={step.data} locale={locale} onDone={onDone} />;
+    case "teach":
+      return <TeachStep lesson={step.lesson} locale={locale} onDone={onDone} />;
+    case "choice":
+      return <ChoiceStep act={step.act} locale={locale} onDone={onDone} />;
+    case "write":
+      return <WriteStep act={step.act} locale={locale} onDone={onDone} />;
+    case "order":
+      return <OrderStep act={step.act} locale={locale} onDone={onDone} />;
+    case "match":
+      return <MatchStep act={step.act} locale={locale} onDone={onDone} />;
+    case "utter":
+      return <UtterStep act={step.act} locale={locale} onDone={onDone} />;
+    case "roleplay":
+      return <RoleplayStep act={step.act} lesson={step.lesson} locale={locale} onDone={onDone} />;
+    case "dialogue":
+      return <DialogueStep lesson={step.lesson} locale={locale} onDone={onDone} />;
+    case "exit":
+      return <ExitStep lesson={step.lesson} locale={locale} onDone={onDone} />;
   }
 }
+
