@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Lock, Star, Check, Target, Brain, Crown, Radio, Flag } from "lucide-react";
+import { Lock, Star, Check, Target, Brain, Crown, Radio, Flag, CheckCircle2 } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { arcTitle, langById, missionDays, onboarding } from "@/lib/content";
 import {
@@ -8,6 +8,8 @@ import {
   courseKey,
   courseLessons,
   hasCourse,
+  isCheckpointLesson,
+  passThreshold,
   unlockedSpecials,
 } from "@/lib/course";
 import { handlerSay } from "@/lib/handler-bus";
@@ -54,6 +56,8 @@ function DashboardPage() {
   const cards = useApp((s) => s.cards);
   const quests = useApp((s) => s.quests);
   const registerLogin = useApp((s) => s.registerLogin);
+  const challengesDone = useApp((s) => s.challengesDone);
+  const completeChallenge = useApp((s) => s.completeChallenge);
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
@@ -104,6 +108,9 @@ function DashboardPage() {
   const legacyActive = courseOn ? undefined : missionDays(profile.langId)[activeIdx];
   const challenge = activeLesson ? challengeForDay(activeLesson.day) : undefined;
   const specials = courseOn && activeLesson ? unlockedSpecials(activeLesson.day) : [];
+  const challengeDone = challenge ? challengesDone.includes(challenge.id) : false;
+  const gate = activeLesson ? passThreshold(activeLesson.id) : 0;
+  const isCheckpoint = activeLesson ? isCheckpointLesson(activeLesson.id) : false;
   const allDone = nextIdx === -1;
 
   // Duolingo-style winding path: horizontal offsets cycle left → centre → right.
@@ -134,6 +141,11 @@ function DashboardPage() {
         {activeLesson && (
           <p className="mt-2 text-xs italic opacity-70">Mission: {activeLesson.mission}</p>
         )}
+        {activeLesson && (
+          <p className="hud mt-2 text-[10px] text-destructive">
+            {isCheckpoint ? "WEEKLY CHECKPOINT · " : ""}UNLOCKS NEXT FILE AT {Math.round(gate * 100)}% ACCURACY
+          </p>
+        )}
         <div className="hud mt-3 flex items-center gap-3 text-[10px] opacity-70">
           <span>
             {tier?.label.toUpperCase()} ·{" "}
@@ -161,6 +173,19 @@ function DashboardPage() {
           <p className="hud mt-2 text-[10px] opacity-70">
             PATTERN: {challenge.target_pattern} · {challenge.estimated_minutes} MIN
           </p>
+          {challengeDone ? (
+            <p className="hud mt-3 flex items-center gap-1 text-[10px] text-primary">
+              <CheckCircle2 className="h-3.5 w-3.5" /> LOGGED · +25 XP
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => completeChallenge(challenge.id, 25)}
+              className="hud mt-3 w-full rounded-sm border border-secondary/60 py-2.5 text-[10px] text-secondary"
+            >
+              MARK CHALLENGE COMPLETE · +25 XP
+            </button>
+          )}
         </section>
       )}
 
