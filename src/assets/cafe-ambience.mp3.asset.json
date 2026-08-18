@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "f48c6efc-fec0-44b0-84b8-73ad2864c5ec",
-  "project_id": "7feb0e21-81f1-4fb0-b428-dabcba067a5a",
-  "url": "/__l5e/assets-v1/f48c6efc-fec0-44b0-84b8-73ad2864c5ec/cafe-ambience.mp3",
-  "r2_key": "a/v1/7feb0e21-81f1-4fb0-b428-dabcba067a5a/f48c6efc-fec0-44b0-84b8-73ad2864c5ec/cafe-ambience.mp3",
-  "original_filename": "cafe-ambience.mp3",
-  "size": 2748000,
   "content_type": "audio/mpeg",
-  "created_at": "2026-08-13T12:47:08Z"
+  "created_at": "2026-08-13T12:47:08Z",
+  "original_filename": "cafe-ambience.mp3",
+  "project_id": "163cee94-fe02-468e-811d-dfd58182fe07",
+  "r2_key": "a/v1/163cee94-fe02-468e-811d-dfd58182fe07/f48c6efc-fec0-44b0-84b8-73ad2864c5ec/cafe-ambience.mp3",
+  "size": 2748000,
+  "url": "/__l5e/assets-v1/f48c6efc-fec0-44b0-84b8-73ad2864c5ec/cafe-ambience.mp3",
+  "version": 1
 }
