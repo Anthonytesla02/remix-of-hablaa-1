@@ -3,6 +3,18 @@ import { Mic, Keyboard, Check, X, Volume2, Loader2, Lightbulb } from "lucide-rea
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { Redaction } from "@/components/Redaction";
 import { Glossed } from "@/components/Glossed";
+import {
+  ChoiceStep,
+  DialogueStep,
+  ExitStep,
+  MatchStep,
+  OrderStep,
+  RoleplayStep,
+  TeachStep,
+  UtterStep,
+  WriteStep,
+} from "@/components/course-steps";
+
 import { evaluateResponse, listenOnce, normalize, sttSupported } from "@/lib/speech";
 import { gradePronunciation } from "@/lib/pronunciation.functions";
 import { useAudioRecorder } from "@/lib/audio-recorder";
