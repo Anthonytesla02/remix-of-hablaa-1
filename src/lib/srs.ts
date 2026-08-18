@@ -1,4 +1,6 @@
 import { srsEngine } from "@/lib/content";
+import { reviewSchedule } from "@/lib/course";
+
 
 export type SrsCard = {
   id: string;
