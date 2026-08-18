@@ -4,7 +4,8 @@ import { X, ShieldAlert } from "lucide-react";
 import { Hydrated } from "@/components/AppFrame";
 import { StepRenderer, type StepResult } from "@/components/steps";
 import { bcp47, gamification, missionDays, onboarding } from "@/lib/content";
-import { buildSession, stepLabel, type Step } from "@/lib/session";
+import { courseKey, lessonById, lessonIdFromKey } from "@/lib/course";
+import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
 import { stopSpeaking } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/session")({
     day: String(s['day'] ?? ""),
     mode: (["mission", "review", "checkpoint"].includes(String(s['mode'])) ? s['mode'] : "mission") as Mode,
   }),
+
   head: () => ({
     meta: [
       { title: "Mission Session — Operation Lingua" },
