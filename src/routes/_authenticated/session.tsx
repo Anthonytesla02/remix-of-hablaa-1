@@ -128,7 +128,8 @@ function SessionPage() {
 
     let remaining = steps.slice(index + 1);
     // Cover integrity at zero: restrict the rest of the session to review/shadowing.
-    if (nextCover === 0 && cover > 0) {
+    // Course lessons are never truncated — the learner needs the whole briefing.
+    if (!lesson && nextCover === 0 && cover > 0) {
       remaining = remaining.filter((x) => x.kind === "review" || x.kind === "shadow");
       setSteps([...steps.slice(0, index + 1), ...remaining]);
     }
@@ -146,13 +147,21 @@ function SessionPage() {
       (finalXp + bonus) * (perfect ? (gamification.xp_rules.perfect_session_multiplier as number) : 1),
     );
 
-    if (mode !== "review") seedCards(entry!.day.new_items, profile!.langId);
+    if (lesson) {
+      seedCards(
+        lesson.vocabulary.map((v) => ({ id: `${lesson.id}:${v.id}`, target: v.es, translation: v.en })),
+        profile!.langId,
+      );
+    } else if (mode !== "review") {
+      seedCards(entry!.day.new_items, profile!.langId);
+    }
 
     const minutes = (Date.now() - startedAt) / 60000;
     completeSession(
       {
         date: Date.now(),
-        dayKey: mode === "review" ? "review" : entry!.key,
+        dayKey: lesson ? courseKey(lesson.id) : mode === "review" ? "review" : entry!.key,
+
         xp: awarded,
         accuracy,
         items: finalGraded,
