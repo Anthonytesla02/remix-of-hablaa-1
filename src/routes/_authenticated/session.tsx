@@ -56,8 +56,13 @@ function SessionPage() {
   const [startedAt] = useState(() => Date.now());
   const [finished, setFinished] = useState(false);
 
+  const lesson = useMemo(() => {
+    const id = lessonIdFromKey(dayKey);
+    return id ? lessonById(id) : undefined;
+  }, [dayKey]);
+
   const days = profile ? missionDays(profile.langId) : [];
-  const entry = days.find((d) => d.key === dayKey) ?? days[0];
+  const entry = lesson ? undefined : (days.find((d) => d.key === dayKey) ?? days[0]);
   const dueAtStart = useMemo(
     () => (profile ? dueCards(cards, profile.langId, 999).length : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,8 +72,12 @@ function SessionPage() {
   const [steps, setSteps] = useState<Step[]>([]);
 
   useEffect(() => {
-    if (!profile || !entry) return;
-    if (mode === "review") {
+    if (!profile) return;
+    if (lesson) {
+      setSteps(buildLessonSession({ lesson, cards, lang: profile.langId }));
+    } else if (!entry) {
+      return;
+    } else if (mode === "review") {
       const reviews = dueCards(cards, profile.langId, 40).map((c) => ({ kind: "review", data: c }) as Step);
       setSteps(reviews);
     } else {
@@ -84,13 +93,14 @@ function SessionPage() {
     }
     return () => stopSpeaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayKey, mode, profile?.langId]);
+  }, [dayKey, mode, profile?.langId, lesson?.id]);
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
   }, [profile, navigate]);
 
-  if (!profile || !entry) return null;
+  if (!profile || (!entry && !lesson)) return null;
+
 
   const locale = bcp47(profile.langId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === profile.tierId);
