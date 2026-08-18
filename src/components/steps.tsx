@@ -24,7 +24,14 @@ import type { Dictation, Mcq, PatternDrill, Shadow, Sts } from "@/lib/content";
 import type { SrsCard } from "@/lib/srs";
 import { useApp } from "@/lib/store";
 
-export type StepResult = { correct: boolean; xp: number; countsForAccuracy: boolean; newContent: boolean };
+export type StepResult = {
+  correct: boolean;
+  xp: number;
+  countsForAccuracy: boolean;
+  newContent: boolean;
+  /** Learner revealed the hint before answering — retains the current review interval. */
+  hinted?: boolean;
+};
 
 type Props = { locale: string; onDone: (r: StepResult) => void };
 

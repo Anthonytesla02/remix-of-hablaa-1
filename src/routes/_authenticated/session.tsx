@@ -4,7 +4,13 @@ import { X, ShieldAlert } from "lucide-react";
 import { Hydrated } from "@/components/AppFrame";
 import { StepRenderer, type StepResult } from "@/components/steps";
 import { bcp47, gamification, missionDays, onboarding } from "@/lib/content";
-import { courseKey, lessonById, lessonIdFromKey } from "@/lib/course";
+import {
+  courseKey,
+  isCheckpointLesson,
+  lessonById,
+  lessonIdFromKey,
+  passThreshold,
+} from "@/lib/course";
 import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
 import { stopSpeaking } from "@/lib/speech";
 import { useApp } from "@/lib/store";
@@ -55,6 +61,9 @@ function SessionPage() {
   const [shadowReps, setShadowReps] = useState(0);
   const [startedAt] = useState(() => Date.now());
   const [finished, setFinished] = useState(false);
+  const [retried, setRetried] = useState<string[]>([]);
+  const [passed, setPassed] = useState(true);
+  const [threshold, setThreshold] = useState(0);
 
   const lesson = useMemo(() => {
     const id = lessonIdFromKey(dayKey);
@@ -109,7 +118,8 @@ function SessionPage() {
 
   function handleDone(r: StepResult) {
     const s = steps[index]!;
-    if (s.kind === "review") reviewCard(s.data.id, r.correct);
+    if (s.kind === "review")
+      reviewCard(s.data.id, r.correct ? (r.hinted ? "hinted" : "correct") : "wrong");
     if (s.kind === "shadow") setShadowReps((n) => n + s.data.recommended_reps);
     if (s.kind === "sts" && r.correct) setStsWins((n) => n + 1);
     if (s.kind === "mcq" && !r.correct) setMcqPerfect(false);
@@ -127,6 +137,16 @@ function SessionPage() {
     }
 
     let remaining = steps.slice(index + 1);
+
+    // Manifest rule `wrong_answer: same_session_and_next_day` — a missed graded
+    // activity returns once more at the end of the same run.
+    const retryId =
+      !r.correct && r.countsForAccuracy && "act" in s && s.act ? s.act.id : null;
+    if (retryId && !retried.includes(retryId)) {
+      setRetried((ids) => [...ids, retryId]);
+      remaining = [...remaining, s];
+      setSteps([...steps.slice(0, index + 1), ...remaining]);
+    }
     // Cover integrity at zero: restrict the rest of the session to review/shadowing.
     // Course lessons are never truncated — the learner needs the whole briefing.
     if (!lesson && nextCover === 0 && cover > 0) {
@@ -141,8 +161,16 @@ function SessionPage() {
     stopSpeaking();
     const accuracy = finalGraded === 0 ? 1 : finalRight / finalGraded;
     const perfect = finalGraded > 0 && finalRight === finalGraded;
+    const threshold = lesson
+      ? passThreshold(lesson.id)
+      : mode === "checkpoint"
+        ? 0.8
+        : 0;
+    const passedRun = finalGraded === 0 ? true : accuracy >= threshold;
     const bonus =
-      mode === "checkpoint" && accuracy >= 0.8 ? (gamification.xp_rules.checkpoint_passed_bonus as number) : 0;
+      (lesson ? isCheckpointLesson(lesson.id) : mode === "checkpoint") && passedRun
+        ? (gamification.xp_rules.checkpoint_passed_bonus as number)
+        : 0;
     const awarded = Math.round(
       (finalXp + bonus) * (perfect ? (gamification.xp_rules.perfect_session_multiplier as number) : 1),
     );
@@ -166,6 +194,7 @@ function SessionPage() {
         accuracy,
         items: finalGraded,
         coverIntact: finalCover === (gamification.cover_integrity.starting_points_per_session as number),
+        passed: passedRun,
       },
       {
         quest_sts_2: stsWins >= 2,
@@ -176,12 +205,13 @@ function SessionPage() {
       },
     );
     setXp(awarded);
+    setPassed(passedRun);
+    setThreshold(threshold);
     setFinished(true);
   }
 
   if (finished) {
     const accuracy = graded === 0 ? 1 : right / graded;
-    const passed = mode !== "checkpoint" || accuracy >= 0.8;
     return (
       <div className="topo mx-auto flex min-h-[100dvh] w-full max-w-md flex-col justify-center px-5">
         <div className="paper-card p-5">
@@ -207,10 +237,15 @@ function SessionPage() {
               <dd>{cover}/5</dd>
             </div>
           </dl>
+          {threshold > 0 && (
+            <p className="hud mt-3 text-[10px] text-muted-foreground">
+              MASTERY THRESHOLD · {Math.round(threshold * 100)}%
+            </p>
+          )}
           <p className="mt-4 text-sm">
             {passed
               ? "Clean work. Missed items are filed in your Debrief Vault and will resurface on schedule."
-              : "Below the 80% threshold. Run the checkpoint again when you're ready — no penalty."}
+              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so this file stays open. Run it again when you're ready — no penalty, and your XP is already banked.`}
           </p>
         </div>
         <Link to="/dashboard" className="hud mt-4 rounded-sm bg-primary py-3.5 text-center text-xs text-primary-foreground">

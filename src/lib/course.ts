@@ -63,8 +63,38 @@ export const courseManifest = manifestRaw as unknown as {
   level: string;
   description: string;
   total_days: number;
-  mastery_rules: Record<string, number | boolean>;
+  weeks: { week: number; checkpoint_lesson_id: string }[];
+  review_schedule: {
+    new_item_intervals_days: number[];
+    wrong_answer: string;
+    hinted_answer: string;
+    correct_no_hint: string;
+  };
+  mastery_rules: {
+    daily_activity_accuracy: number;
+    daily_exit_accuracy: number;
+    weekly_checkpoint_accuracy: number;
+    requires_mission: boolean;
+    final_roleplay_minimum_task_completion: number;
+  };
 };
+
+export const masteryRules = courseManifest.mastery_rules;
+export const reviewSchedule = courseManifest.review_schedule;
+
+/** Checkpoint lessons close each week (day 7, 14, 21, 28). */
+const CHECKPOINT_IDS = new Set(courseManifest.weeks.map((w) => w.checkpoint_lesson_id));
+export function isCheckpointLesson(lessonId: string) {
+  return CHECKPOINT_IDS.has(lessonId);
+}
+
+/** Accuracy a lesson must hit before the next node on the map unlocks. */
+export function passThreshold(lessonId: string) {
+  return isCheckpointLesson(lessonId)
+    ? masteryRules.weekly_checkpoint_accuracy
+    : masteryRules.daily_exit_accuracy;
+}
+
 
 export const courseWeeks: { week: number; title: string; lessons: CourseLesson[] }[] = WEEKS.map(
   (w) => ({

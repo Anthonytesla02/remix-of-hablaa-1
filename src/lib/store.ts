@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { gamification, clearanceForXp } from "@/lib/content";
-import { newCard, schedule, type SrsCard } from "@/lib/srs";
+import { newCard, scheduleGraded, type Outcome, type SrsCard } from "@/lib/srs";
 
 export type Profile = {
   callsign: string;
@@ -21,6 +21,8 @@ export type SessionSummary = {
   accuracy: number;
   items: number;
   coverIntact: boolean;
+  /** Did the run meet the mastery threshold that unlocks the next node? */
+  passed?: boolean;
 };
 
 type State = {
@@ -46,6 +48,7 @@ type State = {
   lastLoginDay: string | null;
   cloudSyncActive: boolean;
   cloudUserId: string | null;
+  challengesDone: string[];
 
   setProfile: (p: Profile) => void;
   resetAll: () => void;
@@ -54,7 +57,8 @@ type State = {
   addXp: (n: number) => void;
   spend: (n: number) => boolean;
   grantBadge: (id: string) => void;
-  reviewCard: (id: string, correct: boolean) => void;
+  reviewCard: (id: string, outcome: Outcome | boolean) => void;
+  completeChallenge: (id: string, xp: number) => void;
   seedCards: (items: { id: string; target: string; translation: string }[], lang: string) => void;
   completeSession: (s: SessionSummary, questFlags: Record<string, boolean>) => void;
   bumpSts: (correct: boolean) => void;
@@ -96,6 +100,7 @@ const initial = {
   lastLoginDay: null,
   cloudSyncActive: false,
   cloudUserId: null,
+  challengesDone: [] as string[],
 };
 
 export const useApp = create<State>()(
@@ -142,12 +147,25 @@ export const useApp = create<State>()(
           return { cards };
         }),
 
-      reviewCard: (id, correct) =>
+      reviewCard: (id, outcome) =>
         set((s) => {
           const card = s.cards[id];
           if (!card) return s;
-          return { cards: { ...s.cards, [id]: schedule(card, correct) } };
+          const graded: Outcome =
+            typeof outcome === "boolean" ? (outcome ? "correct" : "wrong") : outcome;
+          return { cards: { ...s.cards, [id]: scheduleGraded(card, graded) } };
         }),
+
+      completeChallenge: (id, xp) =>
+        set((s) =>
+          s.challengesDone.includes(id)
+            ? s
+            : {
+                challengesDone: [...s.challengesDone, id],
+                xp: s.xp + xp,
+                weeklyXp: s.weeklyXp + xp,
+              },
+        ),
 
       bumpSts: (correct) =>
         set((s) => {
@@ -212,9 +230,12 @@ export const useApp = create<State>()(
         const totalXp = summary.xp + questXp;
         const creditsEarned = Math.floor((s.xp + totalXp) / 20) - Math.floor(s.xp / 20);
 
-        const completedDays = s.completedDays.includes(summary.dayKey)
-          ? s.completedDays
-          : [...s.completedDays, summary.dayKey];
+        // Mastery gating: a node only unlocks the next one when the run passed.
+        const unlocks = summary.passed !== false && summary.dayKey !== "review";
+        const completedDays =
+          !unlocks || s.completedDays.includes(summary.dayKey)
+            ? s.completedDays
+            : [...s.completedDays, summary.dayKey];
 
         if (completedDays.filter((d) => d.startsWith("arc_1")).length >= 3)
           badges.add("border_crosser");
