@@ -1,8 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Lock, Star, Check, Target, Brain, Crown } from "lucide-react";
+import { Lock, Star, Check, Target, Brain, Crown, Radio, Flag } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { arcTitle, langById, missionDays, onboarding } from "@/lib/content";
+import {
+  challengeForDay,
+  courseKey,
+  courseLessons,
+  hasCourse,
+  unlockedSpecials,
+} from "@/lib/course";
 import { handlerSay } from "@/lib/handler-bus";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -14,12 +21,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       {
         name: "description",
         content:
-          "A winding checkpoint map of your mission arcs: run the next mission, or tap a cleared checkpoint to drill its vocabulary in the vault.",
+          "A winding checkpoint map of the 28-day Spanish Foundations course: run today's lesson, or tap a cleared checkpoint to drill its vocabulary in the vault.",
       },
       { property: "og:title", content: "Case File Map — Operation Lingua" },
       {
         property: "og:description",
-        content: "Mission arcs, daily quests and spaced review on one progress map.",
+        content: "Mission arcs, daily challenges and spaced review on one progress map.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -31,6 +38,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     </Hydrated>
   ),
 });
+
+type Node = {
+  key: string;
+  title: string;
+  dayNumber: number;
+  group: string;
+  href: "/session" | "/vault";
+};
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -63,48 +78,97 @@ function DashboardPage() {
 
   const lang = langById(profile.langId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === profile.tierId);
-  const days = missionDays(profile.langId);
+  const courseOn = hasCourse(profile.langId);
   const due = dueCards(cards, profile.langId, 999).length;
-  const nextIdx = days.findIndex((d) => !completedDays.includes(d.key));
-  const activeIdx = nextIdx === -1 ? days.length - 1 : nextIdx;
+
+  const nodes: Node[] = courseOn
+    ? courseLessons.map((l) => ({
+        key: courseKey(l.id),
+        title: l.title,
+        dayNumber: l.day,
+        group: `WEEK ${l.week} — ${l.weekTitle}`,
+        href: "/session",
+      }))
+    : missionDays(profile.langId).map((d) => ({
+        key: d.key,
+        title: d.day.theme,
+        dayNumber: d.day.day_number,
+        group: arcTitle(d.arcId).toUpperCase(),
+        href: "/session",
+      }));
+
+  const nextIdx = nodes.findIndex((n) => !completedDays.includes(n.key));
+  const activeIdx = nextIdx === -1 ? nodes.length - 1 : nextIdx;
+  const activeNode = nodes[activeIdx];
+  const activeLesson = courseOn ? courseLessons[activeIdx] : undefined;
+  const legacyActive = courseOn ? undefined : missionDays(profile.langId)[activeIdx];
+  const challenge = activeLesson ? challengeForDay(activeLesson.day) : undefined;
+  const specials = courseOn && activeLesson ? unlockedSpecials(activeLesson.day) : [];
+  const allDone = nextIdx === -1;
 
   // Duolingo-style winding path: horizontal offsets cycle left → centre → right.
   const OFFSETS = [0, 46, 66, 46, 0, -46, -66, -46];
 
+  const headline = activeLesson?.title ?? legacyActive?.day.theme ?? "COURSE COMPLETE";
+  const blurb = activeLesson
+    ? activeLesson.objectives.slice(0, 2).join(" · ")
+    : legacyActive
+      ? legacyActive.day.learning_objectives.slice(0, 2).join(" · ")
+      : "Every authored day is cleared. Keep your vault serviced while the next unit is declassified.";
+
   return (
     <AppFrame>
       <section className="paper-card p-4">
-        <p className="hud text-[10px] text-destructive">TODAY'S ORDERS</p>
-        <h1 className="hud mt-1 text-lg leading-tight">
-          {lang?.flag_emoji} {days[activeIdx]?.day.theme ?? "ARC COMPLETE"}
-        </h1>
-        <p className="mt-2 text-sm">
-          {days[activeIdx]
-            ? days[activeIdx]!.day.learning_objectives.slice(0, 2).join(" · ")
-            : "All authored mission days for this language are complete. Keep your vault clear while the next arc is declassified."}
+        <p className="hud text-[10px] text-destructive">
+          {allDone ? "ALL FILES CLEARED" : "TODAY'S ORDERS"}
         </p>
+        <h1 className="hud mt-1 text-lg leading-tight">
+          {lang?.flag_emoji} {headline}
+        </h1>
+        {activeLesson && (
+          <p className="hud mt-1 text-[10px] text-secondary">
+            WEEK {activeLesson.week} · DAY {activeLesson.day} · {activeLesson.focus.toUpperCase()}
+          </p>
+        )}
+        <p className="mt-2 text-sm">{blurb}</p>
+        {activeLesson && (
+          <p className="mt-2 text-xs italic opacity-70">Mission: {activeLesson.mission}</p>
+        )}
         <div className="hud mt-3 flex items-center gap-3 text-[10px] opacity-70">
           <span>
-            {tier?.label.toUpperCase()} · {tier?.minutes} MIN
+            {tier?.label.toUpperCase()} ·{" "}
+            {activeLesson ? `${activeLesson.estimated_minutes} MIN` : `${tier?.minutes} MIN`}
           </span>
           <span>{due} DUE IN VAULT</span>
         </div>
-        {days[activeIdx] && (
+        {!allDone && activeNode && (
           <Link
             to="/session"
-            search={{ day: days[activeIdx]!.key, mode: "mission" }}
+            search={{ day: activeNode.key, mode: "mission" }}
             className="hud mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-background py-3 text-xs text-primary"
           >
-            <Target className="h-4 w-4" /> START MISSION
+            <Target className="h-4 w-4" /> {courseOn ? "START TODAY'S LESSON" : "START MISSION"}
           </Link>
         )}
       </section>
+
+      {challenge && (
+        <section className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 p-4">
+          <p className="hud text-[10px] text-secondary">
+            <Flag className="mr-1 inline h-3 w-3" /> DAILY CHALLENGE · {challenge.title.toUpperCase()}
+          </p>
+          <p className="mt-2 text-sm">{challenge.prompt}</p>
+          <p className="hud mt-2 text-[10px] opacity-70">
+            PATTERN: {challenge.target_pattern} · {challenge.estimated_minutes} MIN
+          </p>
+        </section>
+      )}
 
       {due > 0 && (
         <Link
           to="/vault"
           search={{ day: "due" }}
-          className="hud mt-3 flex w-full items-center justify-between rounded-sm border border-secondary/50 bg-secondary/10 px-4 py-3 text-[10px] text-secondary"
+          className="hud mt-3 flex w-full items-center justify-between rounded-sm border border-primary/50 bg-primary/10 px-4 py-3 text-[10px] text-primary"
         >
           <span>DEBRIEF VAULT · {due} ITEMS DUE</span>
           <span>RUN RECALL →</span>
@@ -126,32 +190,54 @@ function DashboardPage() {
         </ul>
       </section>
 
+      {specials.length > 0 && (
+        <section className="mt-6">
+          <p className="hud text-[10px] text-muted-foreground">SPECIAL CHALLENGES UNLOCKED</p>
+          <ul className="mt-2 space-y-2">
+            {specials.slice(-3).map((c) => (
+              <li key={c.id} className="rounded-sm border border-border bg-card px-3 py-2.5">
+                <p className="hud text-[10px] text-secondary">{c.title.toUpperCase()}</p>
+                <p className="mt-1 text-xs">{c.scenario}</p>
+                <Link
+                  to="/simulate"
+                  className="hud mt-2 inline-flex items-center gap-1 text-[10px] text-primary"
+                >
+                  <Radio className="h-3 w-3" /> RUN IN SIMULATION DECK
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-7">
-        <p className="hud text-[10px] text-muted-foreground">CASE FILE MAP</p>
+        <p className="hud text-[10px] text-muted-foreground">
+          {courseOn ? "SPANISH FOUNDATIONS — 28 DAY MAP" : "CASE FILE MAP"}
+        </p>
 
         <div className="relative mt-4">
-          {days.map((d, i) => {
-            const done = completedDays.includes(d.key);
+          {nodes.map((n, i) => {
+            const done = completedDays.includes(n.key);
             const locked = i > activeIdx;
             const active = i === activeIdx && !done;
             const offset = OFFSETS[i % OFFSETS.length]!;
             const nextOffset = OFFSETS[(i + 1) % OFFSETS.length]!;
-            const showArc = i === 0 || days[i - 1]!.arcId !== d.arcId;
+            const showGroup = i === 0 || nodes[i - 1]!.group !== n.group;
 
             return (
-              <div key={d.key}>
-                {showArc && (
+              <div key={n.key}>
+                {showGroup && (
                   <p className="hud mb-3 mt-1 text-center text-[9px] text-secondary">
-                    — {arcTitle(d.arcId).toUpperCase()} —
+                    — {n.group} —
                   </p>
                 )}
                 <div className="relative flex flex-col items-center">
                   <Link
                     to={done ? "/vault" : "/session"}
-                    search={done ? { day: d.key } : { day: d.key, mode: "mission" }}
+                    search={done ? { day: n.key } : { day: n.key, mode: "mission" }}
                     disabled={locked}
                     style={{ transform: `translateX(${offset}px)` }}
-                    aria-label={`${d.day.theme} — ${locked ? "locked" : done ? "cleared, open recall drill" : "next mission"}`}
+                    aria-label={`${n.title} — ${locked ? "locked" : done ? "cleared, open recall drill" : "next lesson"}`}
                     className={`relative z-10 grid h-16 w-16 place-items-center rounded-full border-2 transition-transform active:scale-95 ${
                       locked
                         ? "pointer-events-none border-border/60 bg-card/40 text-muted-foreground"
@@ -168,7 +254,7 @@ function DashboardPage() {
                       <Star className="h-6 w-6" />
                     )}
                     <span className="hud absolute -bottom-1 rounded-full border border-border bg-background px-1.5 text-[8px] text-muted-foreground">
-                      {d.day.day_number}
+                      {n.dayNumber}
                     </span>
                   </Link>
 
@@ -178,7 +264,7 @@ function DashboardPage() {
                       locked ? "text-muted-foreground/60" : active ? "text-secondary" : "text-foreground"
                     }`}
                   >
-                    {d.day.theme}
+                    {n.title}
                   </p>
                   {done && (
                     <span
@@ -189,7 +275,7 @@ function DashboardPage() {
                     </span>
                   )}
 
-                  {i < days.length - 1 && (
+                  {i < nodes.length - 1 && (
                     <span
                       aria-hidden
                       className={`my-3 block h-8 w-0.5 ${locked ? "bg-border/50" : "bg-border"}`}
@@ -205,7 +291,7 @@ function DashboardPage() {
             <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border text-muted-foreground">
               <Crown className="h-6 w-6" />
             </span>
-            <p className="hud text-[9px] text-muted-foreground">NEXT ARC — CLASSIFIED</p>
+            <p className="hud text-[9px] text-muted-foreground">NEXT UNIT — CLASSIFIED</p>
           </div>
         </div>
       </section>
