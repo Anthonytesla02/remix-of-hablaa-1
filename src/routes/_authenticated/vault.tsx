@@ -5,6 +5,8 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { PlayButton } from "@/components/Audio";
 import { Glossed } from "@/components/Glossed";
 import { arcTitle, bcp47, missionDays } from "@/lib/content";
+import { courseKey, courseLessons, hasCourse } from "@/lib/course";
+
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { useApp } from "@/lib/store";
 import type { SrsCard } from "@/lib/srs";
