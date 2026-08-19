@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, ShieldAlert } from "lucide-react";
 import { Hydrated } from "@/components/AppFrame";
 import { StepRenderer, type StepResult } from "@/components/steps";
@@ -69,6 +69,9 @@ function SessionPage() {
   const [threshold, setThreshold] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
   const [handoff, setHandoff] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const lesson = useMemo(() => {
     const id = lessonIdFromKey(dayKey);
@@ -112,6 +115,53 @@ function SessionPage() {
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
   }, [profile, navigate]);
+
+  // A new target (or a re-run) starts a clean slate — the route stays mounted
+  // when we hand off to the next lesson, so reset explicitly.
+  const resetRun = () => {
+    setIndex(0);
+    setXp(0);
+    setRight(0);
+    setGraded(0);
+    setCover(gamification.cover_integrity.starting_points_per_session as number);
+    setStsWins(0);
+    setMcqPerfect(true);
+    setShadowReps(0);
+    setRetried([]);
+    setFinished(false);
+    setCelebrate(false);
+    setHandoff(false);
+  };
+
+  useEffect(() => {
+    resetRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayKey, mode]);
+
+  // Seamless progression: the debrief never waits for a decision. A pass rolls
+  // straight into the next file; a miss re-runs the same one.
+  useEffect(() => {
+    if (!finished || !celebrate) return;
+    const t = setTimeout(() => {
+      setCelebrate(false);
+      setHandoff(true);
+      const done = useApp.getState().completedDays;
+      const next = courseLessons.find((l) => !done.includes(courseKey(l.id)));
+      const go = setTimeout(() => {
+        sfx("transition");
+        if (!passed) {
+          resetRun();
+        } else if (next) {
+          void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
+        } else {
+          void navigate({ to: "/dashboard" });
+        }
+      }, 2600);
+      timers.current.push(go);
+    }, 1900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished, celebrate, passed]);
 
   if (!profile || (!entry && !lesson)) return null;
 
