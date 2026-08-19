@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { X, VolumeX, Volume2 } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { X, VolumeX, Volume2, Music, Music2 } from "lucide-react";
 import avatar from "@/assets/handler-avatar.png";
 import { useHandler, type Mood } from "@/lib/handler-bus";
+import { getSpeakingState, subscribeSpeaking } from "@/lib/speech";
+import { setSfxMuted, sfxMuted } from "@/lib/sfx";
 
 const MOOD_RING: Record<Mood, string> = {
   hype: "border-primary ring-2 ring-primary/40",
@@ -19,13 +21,39 @@ const MOOD_TEXT: Record<Mood, string> = {
   idle: "text-foreground",
 };
 
-/** Floating handler avatar that pops in with reactions and sentiment. */
+const EMPTY = { speaking: false, text: "", locale: "" };
+
+/** Live speech state so the avatar can mouth along with the system voice. */
+export function useSpeaking() {
+  return useSyncExternalStore(subscribeSpeaking, getSpeakingState, () => EMPTY);
+}
+
+/** Animated waveform shown while the handler is reading something out. */
+function Waveform() {
+  return (
+    <span className="flex items-end gap-[2px]" aria-hidden>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className="wave-bar block h-3 w-[2px] rounded-full bg-primary"
+          style={{ animationDelay: `${i * 90}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Floating handler avatar: pops in with reactions, gestures while speaking. */
 export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
   const msg = useHandler((s) => s.msg);
   const muted = useHandler((s) => s.muted);
   const dismiss = useHandler((s) => s.dismiss);
   const toggleMute = useHandler((s) => s.toggleMute);
   const [open, setOpen] = useState(false);
+  const [soundOff, setSoundOff] = useState(false);
+  const { speaking, text: spokenText } = useSpeaking();
+
+  useEffect(() => setSoundOff(sfxMuted()), []);
 
   useEffect(() => {
     if (!msg) {
@@ -45,7 +73,14 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
         offset ? "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]" : "bottom-4"
       }`}
     >
-      {open && msg && (
+      {speaking && spokenText && (
+        <div className="handler-pop pointer-events-none flex max-w-full items-center gap-2 rounded-sm border border-primary/60 bg-card/95 px-3 py-2 shadow-lg backdrop-blur">
+          <Waveform />
+          <p className="line-clamp-2 text-[12px] leading-snug text-primary">{spokenText}</p>
+        </div>
+      )}
+
+      {open && msg && !speaking && (
         <div
           key={msg.id}
           className="handler-pop pointer-events-auto relative rounded-sm border border-border bg-card/95 px-3 py-2.5 pr-8 shadow-lg backdrop-blur"
@@ -64,6 +99,17 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
 
       <div className="pointer-events-auto flex items-center gap-1.5">
         <button
+          onClick={() => {
+            const next = !soundOff;
+            setSoundOff(next);
+            setSfxMuted(next);
+          }}
+          aria-label={soundOff ? "Enable interface sounds" : "Mute interface sounds"}
+          className="rounded-full border border-border bg-card/90 p-1.5 text-muted-foreground backdrop-blur"
+        >
+          {soundOff ? <Music2 className="h-3.5 w-3.5" /> : <Music className="h-3.5 w-3.5" />}
+        </button>
+        <button
           onClick={toggleMute}
           aria-label={muted ? "Unmute handler" : "Mute handler"}
           className="rounded-full border border-border bg-card/90 p-1.5 text-muted-foreground backdrop-blur"
@@ -71,11 +117,26 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
           {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
         </button>
         <button
-          onClick={() => (msg ? dismiss() : useHandler.getState().push("Standing by. Tap a checkpoint and I'll call the shots.", "idle"))}
+          onClick={() =>
+            msg
+              ? dismiss()
+              : useHandler
+                  .getState()
+                  .push("Standing by. Tap a checkpoint and I'll call the shots.", "idle")
+          }
           aria-label="Handler"
-          className={`handler-idle grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 bg-card/90 backdrop-blur ${MOOD_RING[mood]}`}
+          className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 bg-card/90 backdrop-blur ${
+            speaking ? "handler-ring border-primary" : MOOD_RING[mood]
+          }`}
         >
-          <img src={avatar} alt="Your handler" width={512} height={512} loading="lazy" className="h-11 w-11 object-contain" />
+          <img
+            src={avatar}
+            alt="Your handler"
+            width={512}
+            height={512}
+            loading="lazy"
+            className={`h-11 w-11 object-contain ${speaking ? "handler-talk" : "handler-idle"}`}
+          />
         </button>
       </div>
     </div>

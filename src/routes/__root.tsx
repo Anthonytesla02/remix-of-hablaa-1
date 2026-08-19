@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { initSfx } from "@/lib/sfx";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -124,6 +125,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Global interface sound engine (clicks, transitions, completions).
+  useEffect(() => initSfx(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

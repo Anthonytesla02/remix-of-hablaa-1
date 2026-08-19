@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, ShieldAlert } from "lucide-react";
 import { Hydrated } from "@/components/AppFrame";
 import { StepRenderer, type StepResult } from "@/components/steps";
@@ -12,6 +12,9 @@ import {
   passThreshold,
 } from "@/lib/course";
 import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
+import { Completion } from "@/components/Completion";
+import { sfx } from "@/lib/sfx";
+import { courseLessons } from "@/lib/course";
 import { stopSpeaking } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -64,6 +67,11 @@ function SessionPage() {
   const [retried, setRetried] = useState<string[]>([]);
   const [passed, setPassed] = useState(true);
   const [threshold, setThreshold] = useState(0);
+  const [celebrate, setCelebrate] = useState(false);
+  const [handoff, setHandoff] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const lesson = useMemo(() => {
     const id = lessonIdFromKey(dayKey);
@@ -108,6 +116,53 @@ function SessionPage() {
     if (!profile) void navigate({ to: "/" });
   }, [profile, navigate]);
 
+  // A new target (or a re-run) starts a clean slate — the route stays mounted
+  // when we hand off to the next lesson, so reset explicitly.
+  const resetRun = () => {
+    setIndex(0);
+    setXp(0);
+    setRight(0);
+    setGraded(0);
+    setCover(gamification.cover_integrity.starting_points_per_session as number);
+    setStsWins(0);
+    setMcqPerfect(true);
+    setShadowReps(0);
+    setRetried([]);
+    setFinished(false);
+    setCelebrate(false);
+    setHandoff(false);
+  };
+
+  useEffect(() => {
+    resetRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayKey, mode]);
+
+  // Seamless progression: the debrief never waits for a decision. A pass rolls
+  // straight into the next file; a miss re-runs the same one.
+  useEffect(() => {
+    if (!finished || !celebrate) return;
+    const t = setTimeout(() => {
+      setCelebrate(false);
+      setHandoff(true);
+      const done = useApp.getState().completedDays;
+      const next = courseLessons.find((l) => !done.includes(courseKey(l.id)));
+      const go = setTimeout(() => {
+        sfx("transition");
+        if (!passed) {
+          resetRun();
+        } else if (next) {
+          void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
+        } else {
+          void navigate({ to: "/dashboard" });
+        }
+      }, 2600);
+      timers.current.push(go);
+    }, 1900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished, celebrate, passed]);
+
   if (!profile || (!entry && !lesson)) return null;
 
 
@@ -123,6 +178,7 @@ function SessionPage() {
     if (s.kind === "shadow") setShadowReps((n) => n + s.data.recommended_reps);
     if (s.kind === "sts" && r.correct) setStsWins((n) => n + 1);
     if (s.kind === "mcq" && !r.correct) setMcqPerfect(false);
+    sfx(r.countsForAccuracy ? (r.correct ? "correct" : "wrong") : "transition");
 
     let nextCover = cover;
     if (!r.correct && r.newContent) {
@@ -154,7 +210,10 @@ function SessionPage() {
       setSteps([...steps.slice(0, index + 1), ...remaining]);
     }
     if (remaining.length === 0) finish(xp + r.xp, graded + (r.countsForAccuracy ? 1 : 0), right + (r.correct && r.countsForAccuracy ? 1 : 0), nextCover);
-    else setIndex(index + 1);
+    else {
+      setIndex(index + 1);
+      setTimeout(() => sfx("transition"), 90);
+    }
   }
 
   function finish(finalXp: number, finalGraded: number, finalRight: number, finalCover: number) {
@@ -208,6 +267,7 @@ function SessionPage() {
     setPassed(passedRun);
     setThreshold(threshold);
     setFinished(true);
+    setCelebrate(true);
   }
 
   if (finished) {
@@ -245,15 +305,30 @@ function SessionPage() {
           <p className="mt-4 text-sm">
             {passed
               ? "Clean work. Missed items are filed in your Debrief Vault and will resurface on schedule."
-              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so this file stays open. Run it again when you're ready — no penalty, and your XP is already banked.`}
+              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so we run it again right now — no penalty, and your XP is already banked.`}
           </p>
+          {handoff && (
+            <p className="hud mt-4 flex items-center gap-2 text-[10px] text-secondary">
+              <span className="h-1.5 w-1.5 animate-ping rounded-full bg-secondary" />
+              {passed ? "LOADING NEXT FILE…" : "RE-RUNNING THIS FILE…"}
+            </p>
+          )}
         </div>
-        <Link to="/dashboard" className="hud mt-4 rounded-sm bg-primary py-3.5 text-center text-xs text-primary-foreground">
+        <Link to="/dashboard" className="hud mt-4 rounded-sm border border-border py-3.5 text-center text-xs text-muted-foreground">
           RETURN TO MAP
         </Link>
+        {celebrate && (
+          <Completion
+            title={passed ? "OBJECTIVE COMPLETE" : "FILE STILL OPEN"}
+            subtitle={`+${xp} XP`}
+            tone={passed ? "levelup" : "complete"}
+            duration={1800}
+          />
+        )}
       </div>
     );
   }
+
 
   if (!step) {
     return (
@@ -293,7 +368,9 @@ function SessionPage() {
           {stepLabel(step.kind)} · {index + 1}/{total}
         </p>
         <div className="mt-4">
-          <StepRenderer key={index} step={step} locale={locale} onDone={handleDone} />
+          <div key={index} className="step-in">
+          <StepRenderer step={step} locale={locale} onDone={handleDone} />
+        </div>
         </div>
       </main>
     </div>
