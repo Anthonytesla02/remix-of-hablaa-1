@@ -368,7 +368,9 @@ function SessionPage() {
           {stepLabel(step.kind)} · {index + 1}/{total}
         </p>
         <div className="mt-4">
-          <StepRenderer key={index} step={step} locale={locale} onDone={handleDone} />
+          <div key={index} className="step-in">
+          <StepRenderer step={step} locale={locale} onDone={handleDone} />
+        </div>
         </div>
       </main>
     </div>
