@@ -13,7 +13,8 @@ export type AmbienceId =
   | "airport"
   | "market"
   | "taxi"
-  | "hotel";
+  | "hotel"
+  | "pharmacy";
 
 type EventKind = "clink" | "chatter" | "chime" | "rumble" | "beat" | "whoosh";
 
@@ -91,6 +92,16 @@ const CONFIGS: Record<AmbienceId, Config> = {
       { kind: "whoosh", everyMs: [3000, 7000], gain: 0.05 },
     ],
   },
+  pharmacy: {
+    bedGain: 0.025,
+    bedFreq: 380,
+    bedQ: 0.6,
+    events: [
+      { kind: "chime", everyMs: [12000, 24000], gain: 0.04 },
+      { kind: "chatter", everyMs: [5000, 11000], gain: 0.03 },
+      { kind: "clink", everyMs: [6000, 14000], gain: 0.03 },
+    ],
+  },
   hotel: {
     bedGain: 0.03,
     bedFreq: 320,
@@ -111,6 +122,7 @@ export const AMBIENCE_LABELS: Record<AmbienceId, string> = {
   market: "Open-air stalls, bustling voices",
   taxi: "Engine, road noise, passing cars",
   hotel: "Quiet lobby, occasional bell",
+  pharmacy: "Quiet counter, door chime, blister packs",
 };
 
 function noiseBuffer(ctx: AudioContext, seconds = 3) {

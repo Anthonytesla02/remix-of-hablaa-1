@@ -9,6 +9,8 @@ import {
   ShoppingBasket,
   Car,
   BedDouble,
+  Pill,
+  AlertTriangle,
   Mic,
   Keyboard,
   Loader2,
@@ -23,9 +25,10 @@ import { Redaction } from "@/components/Redaction";
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
+import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
 import { bcp47, langById } from "@/lib/content";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
-import { listenOnce, stopSpeaking, sttSupported } from "@/lib/speech";
+import { listenOnce, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
@@ -61,6 +64,7 @@ type Scene = {
   goals: string[];
   minExchanges: number;
   icon: typeof Coffee;
+  special?: boolean;
 };
 
 const SCENES: Scene[] = [
@@ -184,6 +188,24 @@ const SCENES: Scene[] = [
     minExchanges: 12,
     icon: BedDouble,
   },
+  {
+    id: "pharmacy",
+    label: "Pharmacy",
+    character: "customer coming in with a health problem",
+    setting:
+      "a neighbourhood pharmacy counter; the LEARNER is the pharmacist on duty and must serve the customer, who explains symptoms, asks about medicine, dosage and price",
+    goals: [
+      "greeting the customer and asking how you can help",
+      "listening to the symptoms and asking clarifying questions (how long, allergies, other medication)",
+      "recommending a medicine and explaining what it is for",
+      "explaining dosage, frequency and warnings",
+      "a complication: the item is out of stock, needs a prescription, or the customer asks for a cheaper option",
+      "taking payment, giving advice and a warm goodbye",
+    ],
+    minExchanges: 12,
+    icon: Pill,
+    special: true,
+  },
 ];
 
 
@@ -209,6 +231,10 @@ function SimulatePage() {
   const [muted, setMuted] = useState(false);
   const [ended, setEnded] = useState(false);
   const [turns, setTurns] = useState(0);
+  const [correction, setCorrection] = useState<
+    (CoachVerdict & { pending: string; history: Msg[] }) | null
+  >(null);
+  const [checking, setChecking] = useState(false);
 
   const ambienceRef = useRef<Ambience | null>(null);
   const stopListenRef = useRef<() => void>(() => {});
@@ -335,13 +361,50 @@ function SimulatePage() {
   }
 
 
-  function sendText(text: string) {
+  async function sendText(text: string) {
     const clean = text.trim();
-    if (!clean || thinking) return;
-    const next: Msg[] = [...msgs, { role: "user", text: clean }];
-    setMsgs(next);
+    if (!clean || thinking || checking) return;
+    const history = msgs;
+    setMsgs([...history, { role: "user", text: clean }]);
     setTyped("");
-    void advance(clean, msgs);
+    setChecking(true);
+    try {
+      const verdict = await checkUtterance({
+        data: {
+          language,
+          setting: scene?.setting ?? "",
+          characterLine: [...history].reverse().find((m) => m.role === "character")?.text ?? "",
+          userText: clean,
+          options: suggestions.map((s) => s.target),
+        },
+      });
+      if (!verdict.correct) {
+        setSuggestions([]);
+        setCorrection({ ...verdict, pending: clean, history });
+        handlerReact("wrong", "tough");
+        // English coaching, spoken with the target-language voice (Spanish accent).
+        void speak(
+          [verdict.why, verdict.fix, verdict.better ? `Say instead: ${verdict.better}` : ""]
+            .filter(Boolean)
+            .join(" "),
+          locale,
+          0.95,
+        );
+        return;
+      }
+    } catch {
+      /* fall through — never block the scene on the checker */
+    } finally {
+      setChecking(false);
+    }
+    void advance(clean, history);
+  }
+
+  function closeCorrection() {
+    const c = correction;
+    setCorrection(null);
+    stopSpeaking();
+    if (c) void advance(c.pending, c.history);
   }
 
   function record() {
@@ -350,7 +413,7 @@ function SimulatePage() {
       locale,
       (t) => {
         setListening(false);
-        sendText(t.split(" | ")[0] ?? t);
+        void sendText(t.split(" | ")[0] ?? t);
       },
       () => {
         setListening(false);
@@ -402,9 +465,18 @@ function SimulatePage() {
               <button
                 key={s.id}
                 onClick={() => void begin(s)}
-                className="rounded-sm border border-border bg-card p-3 text-left transition-colors hover:border-primary"
+                className={`rounded-sm border bg-card p-3 text-left transition-colors hover:border-primary ${
+                  s.special ? "border-secondary/60" : "border-border"
+                }`}
               >
-                <Icon className="h-5 w-5 text-primary" />
+                <div className="flex items-start justify-between gap-1">
+                  <Icon className="h-5 w-5 text-primary" />
+                  {s.special && (
+                    <span className="hud rounded-sm border border-secondary/60 bg-secondary/15 px-1 py-0.5 text-[7px] text-secondary">
+                      SPECIAL OP
+                    </span>
+                  )}
+                </div>
                 <p className="hud mt-2 text-[11px]">{s.label}</p>
                 <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
                   {AMBIENCE_LABELS[s.id]}
@@ -427,6 +499,7 @@ function SimulatePage() {
         <div className="min-w-0">
           <p className="hud truncate text-[11px] text-secondary">
             LIVE · {scene.label.toUpperCase()}
+            {scene.special ? " · SPECIAL OP" : ""}
           </p>
           <p className="truncate text-[10px] text-muted-foreground">{scene.character}</p>
         </div>
@@ -497,9 +570,10 @@ function SimulatePage() {
             </div>
           ),
         )}
-        {thinking && (
+        {(thinking || checking) && (
           <p className="hud flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> THEY’RE RESPONDING…
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />{" "}
+            {checking ? "CHECKING YOUR SPANISH…" : "THEY’RE RESPONDING…"}
           </p>
         )}
         <div ref={bottomRef} />
@@ -524,7 +598,7 @@ function SimulatePage() {
                 {suggestions.map((s) => (
                   <button
                     key={s.target}
-                    onClick={() => sendText(s.target)}
+                    onClick={() => void sendText(s.target)}
                     disabled={thinking}
                     className="block w-full rounded-sm border border-border bg-card px-2.5 py-2 text-left disabled:opacity-50"
                   >
@@ -547,7 +621,7 @@ function SimulatePage() {
                   className="w-full rounded-sm border border-input bg-card px-3 py-2 text-base outline-none focus:border-secondary"
                 />
                 <button
-                  onClick={() => sendText(typed)}
+                  onClick={() => void sendText(typed)}
                   disabled={!typed.trim() || thinking}
                   aria-label="Send reply"
                   className="rounded-sm bg-primary p-3 text-primary-foreground disabled:opacity-40"
@@ -588,6 +662,51 @@ function SimulatePage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+      {correction && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-md rounded-sm border border-destructive/60 bg-card p-4 shadow-lg">
+            <p className="hud flex items-center gap-1.5 text-[10px] text-destructive">
+              <AlertTriangle className="h-3.5 w-3.5" /> TRANSMISSION ERROR
+            </p>
+            <p className="mt-2 text-[11px] text-muted-foreground">You said</p>
+            <p className="text-sm">{correction.pending}</p>
+
+            {correction.why && (
+              <>
+                <p className="hud mt-3 text-[9px] text-destructive">WHAT WENT WRONG</p>
+                <p className="mt-0.5 text-[12px]">{correction.why}</p>
+              </>
+            )}
+            {correction.fix && (
+              <>
+                <p className="hud mt-3 text-[9px] text-secondary">HOW TO FIX IT</p>
+                <p className="mt-0.5 text-[12px]">{correction.fix}</p>
+              </>
+            )}
+            {correction.better && (
+              <div className="mt-3 rounded-sm border border-primary/40 bg-primary/5 p-2.5">
+                <p className="hud text-[9px] text-primary">SAY THIS NEXT TIME</p>
+                <p className="mt-0.5 text-sm">{correction.better}</p>
+                {correction.better_translation && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {correction.better_translation}
+                  </p>
+                )}
+                <div className="mt-1.5">
+                  <PlayButton text={correction.better} locale={locale} label="HEAR IT" />
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={closeCorrection}
+              className="hud mt-4 w-full rounded-sm bg-primary py-3 text-xs text-primary-foreground"
+            >
+              GOT IT · CONTINUE
+            </button>
+          </div>
         </div>
       )}
     </AppFrame>
