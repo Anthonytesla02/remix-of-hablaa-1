@@ -452,9 +452,11 @@ export function TeachStep({ lesson, locale, onDone }: Props & { lesson: CourseLe
 
       <button
         className={btn}
+        disabled={!drillDone}
         onClick={() => onDone({ correct: true, xp: 5, countsForAccuracy: false, newContent: false })}
       >
-        BEGIN DRILLS
+        {drillDone ? "BEGIN DRILLS" : "COMPLETE VOCAL CALIBRATION FIRST"}
+
       </button>
     </div>
   );
