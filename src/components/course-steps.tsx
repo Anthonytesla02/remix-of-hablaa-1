@@ -157,9 +157,210 @@ function Hint({ act, shown, onShow }: { act: CourseActivity; shown: boolean; onS
   );
 }
 
+/* ── Vocal calibration portal — auto-play + repeat drill ──────────────── */
+const REPS_PER_WORD = 5;
+
+const PRAISE = [
+  "Good job. Now repeat again.",
+  "Solid. One more time.",
+  "Copy that. Again.",
+  "Clean signal. Repeat.",
+  "Locked in. Last one.",
+];
+
+function VocabDrill({
+  lesson,
+  locale,
+  onComplete,
+}: {
+  lesson: CourseLesson;
+  locale: string;
+  onComplete: () => void;
+}) {
+  const say = useSpeaker(locale);
+  const addXp = useApp((s) => s.addXp);
+  const { recording, error: micError, start, stop } = useAudioRecorder();
+
+  const words = lesson.vocabulary;
+  const [wi, setWi] = useState(0);
+  const [rep, setRep] = useState(0);
+  const [phase, setPhase] = useState<"playing" | "await" | "grading" | "result">("playing");
+  const [result, setResult] = useState<{ grade: string; transcript: string; overlap: number } | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  const word = words[wi];
+
+  // Speak the current word at the start of every rep, then hand over to the mic.
+  useEffect(() => {
+    if (!word) return;
+    let alive = true;
+    setResult(null);
+    setError(null);
+    setPhase("playing");
+    void (async () => {
+      await say(word.es);
+      if (alive) setPhase("await");
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wi, rep, word?.id]);
+
+  function advance() {
+    if (rep + 1 < REPS_PER_WORD) {
+      setRep(rep + 1);
+    } else if (wi + 1 < words.length) {
+      setRep(0);
+      setWi(wi + 1);
+    } else {
+      onComplete();
+    }
+  }
+
+  async function toggleMic() {
+    if (!word) return;
+    if (!recording) {
+      setResult(null);
+      setError(null);
+      void start();
+      return;
+    }
+    setPhase("grading");
+    const captured = await stop();
+    if (!captured) {
+      setError("No audio captured — hold the mic open a moment longer.");
+      setPhase("await");
+      return;
+    }
+    try {
+      const grade = await gradePronunciation({
+        data: { audio: captured.base64, expected: word.es, locale, mimeType: captured.mimeType },
+      });
+      setResult(grade);
+      setPhase("result");
+      if (grade.grade === "exact") addXp(3);
+      else if (grade.grade === "close") addXp(1);
+      if (grade.grade !== "miss") {
+        handlerReact("correct", "hype");
+        setTimeout(advance, 1400);
+      } else {
+        handlerReact("wrong", "tough");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Grading failed.");
+      setPhase("await");
+    }
+  }
+
+  if (!word) return null;
+
+  const repDots = Array.from({ length: REPS_PER_WORD }, (_, i) => i);
+
+  return (
+    <div className="rounded-sm border border-secondary/40 bg-card/60 p-4">
+      <div className="flex items-center justify-between">
+        <p className="hud text-[10px] text-secondary">
+          <Radio className="mr-1 inline h-3 w-3" /> VOCAL CALIBRATION
+        </p>
+        <p className="hud text-[10px] text-muted-foreground">
+          {wi + 1}/{words.length}
+        </p>
+      </div>
+
+      <div className="mt-4 text-center">
+        <p className="text-3xl leading-tight">{word.es}</p>
+        <p className="hud mt-1 text-[10px] text-muted-foreground">{word.en.toUpperCase()}</p>
+      </div>
+
+      <div className="mt-3 flex items-center justify-center gap-1.5">
+        {repDots.map((i) => (
+          <span
+            key={i}
+            className={`h-1.5 w-6 rounded-full ${
+              i < rep ? "bg-primary" : i === rep ? "bg-secondary" : "bg-border"
+            }`}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {phase === "playing" ? (
+          <p className="hud animate-pulse text-center text-[11px] text-secondary">
+            <Volume2 className="mr-1 inline h-3.5 w-3.5" /> TRANSMITTING…
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={toggleMic}
+            disabled={phase === "grading"}
+            className={`hud flex w-full items-center justify-center gap-2 rounded-sm border py-3 text-[11px] ${
+              recording
+                ? "border-destructive text-destructive"
+                : "border-secondary/60 text-secondary"
+            }`}
+          >
+            {phase === "grading" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Mic className={`h-4 w-4 ${recording ? "animate-pulse" : ""}`} />
+            )}
+            {phase === "grading"
+              ? "ANALYSING…"
+              : recording
+                ? "● RECORDING — TAP TO SUBMIT"
+                : `REPEAT IT (${rep + 1}/${REPS_PER_WORD})`}
+          </button>
+        )}
+
+        {result && (
+          <div
+            className={`rounded-sm border p-2 text-center text-[11px] ${
+              result.grade === "miss"
+                ? "border-destructive/50 bg-destructive/10"
+                : "border-primary/50 bg-primary/10"
+            }`}
+          >
+            <p className="hud text-[10px]">
+              {result.grade === "exact"
+                ? `NATIVE-LIKE · ${result.overlap}%`
+                : result.grade === "close"
+                  ? `CLOSE · ${result.overlap}%`
+                  : `OFF TARGET · ${result.overlap}%`}
+            </p>
+            <p className="mt-1">
+              {result.grade === "miss"
+                ? "Not quite — listen again and repeat."
+                : (PRAISE[rep] ?? "Good job. Now repeat again.")}
+            </p>
+            {result.transcript && (
+              <p className="mt-1 text-[10px] opacity-60">HEARD: {result.transcript}</p>
+            )}
+          </div>
+        )}
+
+        {(error || micError) && (
+          <p className="hud text-center text-[10px] text-destructive">{error ?? micError}</p>
+        )}
+
+        <div className="flex gap-2">
+          <button type="button" onClick={() => void say(word.es)} className={ghost}>
+            <Volume2 className="mr-1 inline h-3 w-3" /> HEAR AGAIN
+          </button>
+          <button type="button" onClick={advance} className={ghost}>
+            SKIP
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Field Briefing ───────────────────────────────────────────────────── */
 export function TeachStep({ lesson, locale, onDone }: Props & { lesson: CourseLesson }) {
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  const [drillDone, setDrillDone] = useState(false);
   const say = useSpeaker(locale);
 
   useEffect(() => {
@@ -201,29 +402,33 @@ export function TeachStep({ lesson, locale, onDone }: Props & { lesson: CourseLe
 
       <div>
         <p className="hud text-[10px] text-muted-foreground">
-          <BookOpen className="mr-1 inline h-3 w-3" /> VOCABULARY — TAP TO HEAR
+          <BookOpen className="mr-1 inline h-3 w-3" /> VOCABULARY — LISTEN & REPEAT
         </p>
-        <ul className="mt-2 grid grid-cols-1 gap-2">
-          {lesson.vocabulary.map((v) => (
-            <li key={v.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setRevealed((r) => ({ ...r, [v.id]: true }));
-                  void say(v.es);
-                }}
-                className="flex w-full items-center justify-between rounded-sm border border-border bg-card px-3 py-2 text-left"
-              >
-                <span className="text-base">{v.es}</span>
-                <span className="hud flex items-center gap-2 text-[10px] text-muted-foreground">
-                  {revealed[v.id] ? v.en : "TAP"}
-                  <Volume2 className="h-3.5 w-3.5 text-secondary" />
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2">
+          {drillDone ? (
+            <ul className="grid grid-cols-1 gap-2">
+              {lesson.vocabulary.map((v) => (
+                <li key={v.id}>
+                  <button
+                    type="button"
+                    onClick={() => void say(v.es)}
+                    className="flex w-full items-center justify-between rounded-sm border border-border bg-card px-3 py-2 text-left"
+                  >
+                    <span className="text-base">{v.es}</span>
+                    <span className="hud flex items-center gap-2 text-[10px] text-muted-foreground">
+                      {v.en}
+                      <Volume2 className="h-3.5 w-3.5 text-secondary" />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <VocabDrill lesson={lesson} locale={locale} onComplete={() => setDrillDone(true)} />
+          )}
+        </div>
       </div>
+
 
       <div>
         <p className="hud text-[10px] text-muted-foreground">WORKED EXAMPLES</p>
@@ -247,9 +452,11 @@ export function TeachStep({ lesson, locale, onDone }: Props & { lesson: CourseLe
 
       <button
         className={btn}
+        disabled={!drillDone}
         onClick={() => onDone({ correct: true, xp: 5, countsForAccuracy: false, newContent: false })}
       >
-        BEGIN DRILLS
+        {drillDone ? "BEGIN DRILLS" : "COMPLETE VOCAL CALIBRATION FIRST"}
+
       </button>
     </div>
   );
