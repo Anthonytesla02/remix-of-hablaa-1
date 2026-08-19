@@ -305,15 +305,30 @@ function SessionPage() {
           <p className="mt-4 text-sm">
             {passed
               ? "Clean work. Missed items are filed in your Debrief Vault and will resurface on schedule."
-              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so this file stays open. Run it again when you're ready — no penalty, and your XP is already banked.`}
+              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so we run it again right now — no penalty, and your XP is already banked.`}
           </p>
+          {handoff && (
+            <p className="hud mt-4 flex items-center gap-2 text-[10px] text-secondary">
+              <span className="h-1.5 w-1.5 animate-ping rounded-full bg-secondary" />
+              {passed ? "LOADING NEXT FILE…" : "RE-RUNNING THIS FILE…"}
+            </p>
+          )}
         </div>
-        <Link to="/dashboard" className="hud mt-4 rounded-sm bg-primary py-3.5 text-center text-xs text-primary-foreground">
+        <Link to="/dashboard" className="hud mt-4 rounded-sm border border-border py-3.5 text-center text-xs text-muted-foreground">
           RETURN TO MAP
         </Link>
+        {celebrate && (
+          <Completion
+            title={passed ? "OBJECTIVE COMPLETE" : "FILE STILL OPEN"}
+            subtitle={`+${xp} XP`}
+            tone={passed ? "levelup" : "complete"}
+            duration={1800}
+          />
+        )}
       </div>
     );
   }
+
 
   if (!step) {
     return (
