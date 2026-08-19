@@ -12,6 +12,9 @@ import {
   passThreshold,
 } from "@/lib/course";
 import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
+import { Completion } from "@/components/Completion";
+import { sfx } from "@/lib/sfx";
+import { courseLessons } from "@/lib/course";
 import { stopSpeaking } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -64,6 +67,8 @@ function SessionPage() {
   const [retried, setRetried] = useState<string[]>([]);
   const [passed, setPassed] = useState(true);
   const [threshold, setThreshold] = useState(0);
+  const [celebrate, setCelebrate] = useState(false);
+  const [handoff, setHandoff] = useState(false);
 
   const lesson = useMemo(() => {
     const id = lessonIdFromKey(dayKey);
@@ -123,6 +128,7 @@ function SessionPage() {
     if (s.kind === "shadow") setShadowReps((n) => n + s.data.recommended_reps);
     if (s.kind === "sts" && r.correct) setStsWins((n) => n + 1);
     if (s.kind === "mcq" && !r.correct) setMcqPerfect(false);
+    sfx(r.countsForAccuracy ? (r.correct ? "correct" : "wrong") : "transition");
 
     let nextCover = cover;
     if (!r.correct && r.newContent) {
@@ -154,7 +160,10 @@ function SessionPage() {
       setSteps([...steps.slice(0, index + 1), ...remaining]);
     }
     if (remaining.length === 0) finish(xp + r.xp, graded + (r.countsForAccuracy ? 1 : 0), right + (r.correct && r.countsForAccuracy ? 1 : 0), nextCover);
-    else setIndex(index + 1);
+    else {
+      setIndex(index + 1);
+      setTimeout(() => sfx("transition"), 90);
+    }
   }
 
   function finish(finalXp: number, finalGraded: number, finalRight: number, finalCover: number) {
@@ -208,6 +217,7 @@ function SessionPage() {
     setPassed(passedRun);
     setThreshold(threshold);
     setFinished(true);
+    setCelebrate(true);
   }
 
   if (finished) {
