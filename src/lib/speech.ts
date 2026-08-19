@@ -160,12 +160,16 @@ export async function speak(text: string, locale: string, rate = 1): Promise<voi
     });
   } catch {
     /* noop */
+  } finally {
+    setSpeaking({ speaking: false, text: "", locale: "" });
   }
 }
 
 export function stopSpeaking() {
   if (ttsSupported()) window.speechSynthesis.cancel();
+  setSpeaking({ speaking: false, text: "", locale: "" });
 }
+
 
 
 type SR = any;
