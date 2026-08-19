@@ -35,14 +35,59 @@ function voicesReady(): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
+/** Prefer natural/neural voices — the handler should never sound robotic. */
+const QUALITY = [
+  "natural",
+  "neural",
+  "premium",
+  "enhanced",
+  "google",
+  "siri",
+  "microsoft",
+];
+
+function score(v: SpeechSynthesisVoice) {
+  const n = v.name.toLowerCase();
+  let s = 0;
+  QUALITY.forEach((q, i) => {
+    if (n.includes(q)) s += (QUALITY.length - i) * 10;
+  });
+  if (!v.localService) s += 5; // cloud voices are usually the good ones
+  if (n.includes("compact") || n.includes("espeak")) s -= 30;
+  return s;
+}
+
 function pickVoice(locale: string) {
   if (!ttsSupported()) return undefined;
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis.getVoices();
   const base = locale.split("-")[0] ?? locale;
-  return (
-    voicesCache.find((v) => v.lang.replace("_", "-") === locale) ??
-    voicesCache.find((v) => v.lang.replace("_", "-").startsWith(base))
-  );
+  const exact = voicesCache.filter((v) => v.lang.replace("_", "-") === locale);
+  const loose = voicesCache.filter((v) => v.lang.replace("_", "-").startsWith(base));
+  const pool = exact.length > 0 ? exact : loose;
+  return [...pool].sort((a, b) => score(b) - score(a))[0];
+}
+
+/* ---------------------------------------------------------------- *
+ * Speaking bus — lets the handler avatar animate while the system   *
+ * is talking (mouth/gesture animation + live caption).              *
+ * ---------------------------------------------------------------- */
+
+type SpeakingState = { speaking: boolean; text: string; locale: string };
+let speakingState: SpeakingState = { speaking: false, text: "", locale: "" };
+const listeners = new Set<() => void>();
+
+export function subscribeSpeaking(fn: () => void) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+export function getSpeakingState() {
+  return speakingState;
+}
+
+function setSpeaking(next: SpeakingState) {
+  speakingState = next;
+  listeners.forEach((l) => l());
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -52,6 +97,8 @@ export async function speak(text: string, locale: string, rate = 1): Promise<voi
   const synth = window.speechSynthesis;
   try {
     await voicesReady();
+    setSpeaking({ speaking: true, text, locale });
+
 
     // Clear any queued/stuck utterance, then give the engine a beat.
     // Speaking immediately after cancel() is silently dropped in Chrome.
