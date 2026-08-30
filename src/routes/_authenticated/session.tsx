@@ -151,6 +151,9 @@ function SessionPage() {
         sfx("transition");
         if (!passed) {
           resetRun();
+        } else if (lesson) {
+          // Straight into today's field practice — apply what was just learned.
+          void navigate({ to: "/simulate", search: { daily: lesson.id } });
         } else if (next) {
           void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
         } else {
@@ -162,6 +165,7 @@ function SessionPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished, celebrate, passed]);
+
 
   if (!profile || (!entry && !lesson)) return null;
 
