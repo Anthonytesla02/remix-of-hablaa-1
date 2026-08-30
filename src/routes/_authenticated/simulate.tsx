@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Coffee,
@@ -10,28 +10,39 @@ import {
   Car,
   BedDouble,
   Pill,
+  GraduationCap,
   AlertTriangle,
   Mic,
+  Square,
   Keyboard,
   Loader2,
   Volume2,
   VolumeX,
   Send,
+  RotateCcw,
   LogOut,
 } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
+import { Completion } from "@/components/Completion";
 import { Glossed } from "@/components/Glossed";
 import { Redaction } from "@/components/Redaction";
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
+import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
+import { lessonById } from "@/lib/course";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
-import { listenOnce, speak, stopSpeaking, sttSupported } from "@/lib/speech";
+import { sfx } from "@/lib/sfx";
+import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
+  validateSearch: (s: Record<string, unknown>): { daily?: string } => {
+    const daily = s['daily'] ? String(s['daily']) : undefined;
+    return daily ? { daily } : {};
+  },
   head: () => ({
     meta: [
       { title: "Simulation Deck — Operation Lingua" },
