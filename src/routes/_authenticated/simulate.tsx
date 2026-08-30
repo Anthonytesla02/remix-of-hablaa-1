@@ -39,10 +39,15 @@ import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speec
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
-  validateSearch: (s: Record<string, unknown>): { daily?: string } => {
+  validateSearch: (s: Record<string, unknown>): { daily?: string; weekly?: number } => {
     const daily = s['daily'] ? String(s['daily']) : undefined;
-    return daily ? { daily } : {};
+    const weekRaw = s['weekly'] ? Number(s['weekly']) : NaN;
+    const out: { daily?: string; weekly?: number } = {};
+    if (daily) out.daily = daily;
+    if (Number.isFinite(weekRaw)) out.weekly = weekRaw;
+    return out;
   },
+
   head: () => ({
     meta: [
       { title: "Simulation Deck — Operation Lingua" },
