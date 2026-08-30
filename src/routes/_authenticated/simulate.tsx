@@ -514,15 +514,26 @@ function SimulatePage() {
     ambienceRef.current?.stop();
     stopListenRef.current();
     stopSpeaking();
-    if (award) {
-      const userTurns = msgs.filter((m) => m.role === "user").length;
-      addXp(Math.min(120, userTurns * 12));
+    const userTurns = msgs.filter((m) => m.role === "user").length;
+    const gained = award ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) : 0;
+    if (gained > 0) addXp(gained);
+
+    // Daily practice run: celebrate the reward, then hand them back to the map.
+    if (scene?.daily && award) {
+      setReward(gained);
+      setListening(false);
+      setDraft(null);
+      setTimeout(() => void navigate({ to: "/dashboard" }), 2400);
+      return;
     }
     setScene(null);
     setMsgs([]);
     setSuggestions([]);
     setEnded(false);
+    setDraft(null);
+    if (daily) void navigate({ to: "/dashboard" });
   }
+
 
   /* ── Scene picker ───────────────────────────────────────────────────── */
   if (!scene) {
