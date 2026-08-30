@@ -73,7 +73,18 @@ type State = {
   bumpShadow: () => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
   setCloudSync: (active: boolean, userId: string | null) => void;
+  checkIn: () => CheckInResult | null;
+  completeWeeklyRecall: (week: number, xp: number) => void;
 };
+
+export type CheckInResult = {
+  day: string;
+  points: number;
+  bonuses: { label: string; points: number }[];
+  weekCount: number;
+  monthCount: number;
+};
+
 
 function dayKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
