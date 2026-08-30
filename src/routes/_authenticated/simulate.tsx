@@ -448,19 +448,43 @@ function SimulatePage() {
   }
 
   function record() {
+    if (listening) {
+      stopListenRef.current();
+      return;
+    }
+    setHeard("");
+    setDraft(null);
     setListening(true);
-    stopListenRef.current = listenOnce(
-      locale,
-      (t) => {
+    sfx("record");
+    stopListenRef.current = listenContinuous(locale, {
+      onPartial: setHeard,
+      onFinal: (text) => {
         setListening(false);
-        void sendText(t.split(" | ")[0] ?? t);
+        sfx("stop");
+        const clean = text.trim();
+        if (!clean) return;
+        setDrafting(true);
+        setDraft({ text: clean, translation: "" });
+        void translateUtterance({ data: { text: clean, language } })
+          .then((t) => setDraft({ text: t.text || clean, translation: t.translation }))
+          .catch(() => setDraft({ text: clean, translation: "" }))
+          .finally(() => setDrafting(false));
       },
-      () => {
+      onError: () => {
         setListening(false);
         setUseText(true);
       },
-    );
+    });
   }
+
+  function sendDraft() {
+    const d = draft;
+    if (!d?.text.trim()) return;
+    setDraft(null);
+    setHeard("");
+    void sendText(d.text);
+  }
+
 
   function toggleMute() {
     const next = !muted;
