@@ -11,6 +11,7 @@ import {
   BedDouble,
   Pill,
   GraduationCap,
+  CalendarCheck,
   AlertTriangle,
   Mic,
   Square,
@@ -32,17 +33,22 @@ import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
 import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
-import { lessonById } from "@/lib/course";
+import { courseWeeks, lessonById } from "@/lib/course";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { sfx } from "@/lib/sfx";
 import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
-  validateSearch: (s: Record<string, unknown>): { daily?: string } => {
+  validateSearch: (s: Record<string, unknown>): { daily?: string; weekly?: number } => {
     const daily = s['daily'] ? String(s['daily']) : undefined;
-    return daily ? { daily } : {};
+    const weekRaw = s['weekly'] ? Number(s['weekly']) : NaN;
+    const out: { daily?: string; weekly?: number } = {};
+    if (daily) out.daily = daily;
+    if (Number.isFinite(weekRaw)) out.weekly = weekRaw;
+    return out;
   },
+
   head: () => ({
     meta: [
       { title: "Simulation Deck — Operation Lingua" },
@@ -77,7 +83,9 @@ type Scene = {
   icon: typeof Coffee;
   special?: boolean;
   daily?: boolean;
+  weeklyWeek?: number;
 };
+
 
 const SCENES: Scene[] = [
   {
@@ -243,6 +251,36 @@ function dailyScene(lessonId: string): Scene | null {
   };
 }
 
+/** Builds a recall simulation covering everything taught in a given week. */
+function weeklyScene(week: number): Scene | null {
+  const w = courseWeeks.find((x) => x.week === week);
+  if (!w) return null;
+  const words = w.lessons
+    .flatMap((l) => l.vocabulary.slice(0, 5).map((v) => v.es))
+    .slice(0, 24)
+    .join(", ");
+  const patterns = w.lessons.map((l) => l.focus).join("; ");
+  return {
+    id: "cafe",
+    label: `Weekly recall — Week ${w.week}`,
+    character: "old friend catching up with you over coffee",
+    setting: `a relaxed catch-up conversation designed to recall everything from week ${w.week}: "${w.title}". Rotate through the week's topics rather than staying on one.`,
+    goals: [
+      `warm greeting and small talk reusing week ${w.week} patterns`,
+      `work through these focuses one by one: ${patterns}`,
+      `pull the learner into reusing this vocabulary: ${words}`,
+      "throw in one unexpected twist that forces them to combine two of the week's patterns",
+      "close with a recap of what they handled well",
+    ],
+    minExchanges: 12,
+    icon: CalendarCheck,
+    special: true,
+    weeklyWeek: w.week,
+  };
+}
+
+
+
 type Msg = {
   role: "user" | "character";
   text: string;
@@ -251,10 +289,11 @@ type Msg = {
 };
 
 function SimulatePage() {
-  const { daily } = Route.useSearch();
+  const { daily, weekly } = Route.useSearch();
   const navigate = useNavigate();
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
+  const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -299,12 +338,20 @@ function SimulatePage() {
 
   // Arriving straight from a cleared lesson: drop them into today's practice scene.
   useEffect(() => {
-    if (!daily || scene) return;
-    const s = dailyScene(daily);
-    if (s) void begin(s);
-    else void navigate({ to: "/dashboard" });
+    if (scene) return;
+    if (daily) {
+      const s = dailyScene(daily);
+      if (s) void begin(s);
+      else void navigate({ to: "/dashboard" });
+      return;
+    }
+    if (weekly !== undefined) {
+      const s = weeklyScene(weekly);
+      if (s) void begin(s);
+      else void navigate({ to: "/dashboard" });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [daily]);
+  }, [daily, weekly]);
 
 
 
@@ -515,11 +562,15 @@ function SimulatePage() {
     stopListenRef.current();
     stopSpeaking();
     const userTurns = msgs.filter((m) => m.role === "user").length;
-    const gained = award ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) : 0;
-    if (gained > 0) addXp(gained);
+    const weeklyBonus = scene?.weeklyWeek && award ? 120 : 0;
+    const gained = award
+      ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) + weeklyBonus
+      : 0;
+    if (gained > 0 && !scene?.weeklyWeek) addXp(gained);
+    if (scene?.weeklyWeek && award) completeWeeklyRecall(scene.weeklyWeek, gained);
 
-    // Daily practice run: celebrate the reward, then hand them back to the map.
-    if (scene?.daily && award) {
+    // Guided run (daily practice or weekly recall): celebrate, then back to the map.
+    if ((scene?.daily || scene?.weeklyWeek) && award) {
       setReward(gained);
       setListening(false);
       setDraft(null);
@@ -531,7 +582,7 @@ function SimulatePage() {
     setSuggestions([]);
     setEnded(false);
     setDraft(null);
-    if (daily) void navigate({ to: "/dashboard" });
+    if (daily || weekly !== undefined) void navigate({ to: "/dashboard" });
   }
 
 
@@ -606,6 +657,15 @@ function SimulatePage() {
           </button>
         </div>
       </div>
+
+      {scene.weeklyWeek && (
+        <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
+          <p className="hud text-[9px] text-secondary">WEEKLY RECALL OPERATION · WEEK {scene.weeklyWeek}</p>
+          <p className="mt-0.5 text-[11px]">
+            Everything from this week, live and unscripted. Clear the scene to bank the recall bonus.
+          </p>
+        </div>
+      )}
 
       {scene.daily && (
         <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
@@ -683,7 +743,7 @@ function SimulatePage() {
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
           >
-            {scene.daily ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
+            {scene.daily || scene.weeklyWeek ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
           </button>
         </div>
       ) : (

@@ -49,6 +49,14 @@ type State = {
   cloudSyncActive: boolean;
   cloudUserId: string | null;
   challengesDone: string[];
+  /** Day keys the operative has checked in on. */
+  checkIns: string[];
+  checkInPoints: number;
+  lastCheckIn: string | null;
+  /** Week numbers whose recall simulation has been cleared. */
+  weeklyRecallDone: number[];
+
+
 
   setProfile: (p: Profile) => void;
   resetAll: () => void;
@@ -65,11 +73,38 @@ type State = {
   bumpShadow: () => void;
   setSetting: <K extends keyof State["settings"]>(k: K, v: State["settings"][K]) => void;
   setCloudSync: (active: boolean, userId: string | null) => void;
+  checkIn: () => CheckInResult | null;
+  completeWeeklyRecall: (week: number, xp: number) => void;
 };
+
+export type CheckInResult = {
+  day: string;
+  points: number;
+  bonuses: { label: string; points: number }[];
+  weekCount: number;
+  monthCount: number;
+};
+
 
 function dayKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** Monday-anchored week key, e.g. 2026-W35. */
+export function weekKey(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (t.getUTCDay() + 6) % 7;
+  t.setUTCDate(t.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  const week =
+    1 + Math.round(((t.getTime() - firstThursday.getTime()) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${t.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+export function monthKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 
 function pickQuests(): Quest[] {
   const all = gamification.daily_quest_templates as { id: string; label: string; reward_xp: number }[];
@@ -101,7 +136,12 @@ const initial = {
   cloudSyncActive: false,
   cloudUserId: null,
   challengesDone: [] as string[],
+  checkIns: [] as string[],
+  checkInPoints: 0,
+  lastCheckIn: null,
+  weeklyRecallDone: [] as number[],
 };
+
 
 export const useApp = create<State>()(
   persist(
@@ -175,6 +215,46 @@ export const useApp = create<State>()(
             : s.badges;
           return { stsStreak, badges };
         }),
+
+      checkIn: () => {
+        const s = get();
+        const today = dayKey();
+        if (s.checkIns.includes(today)) return null;
+
+        const checkIns = [...s.checkIns, today];
+        const wk = weekKey();
+        const mk = monthKey();
+        const weekCount = checkIns.filter((d) => weekKey(new Date(d)) === wk).length;
+        const monthCount = checkIns.filter((d) => d.startsWith(mk)).length;
+
+        const bonuses: { label: string; points: number }[] = [];
+        let points = 10;
+        if (weekCount === 7) bonuses.push({ label: "PERFECT WEEK", points: 70 });
+        if (weekCount % 3 === 0 && weekCount < 7) bonuses.push({ label: "3-DAY WEEK STREAK", points: 15 });
+        if (monthCount === 20) bonuses.push({ label: "MONTHLY DEDICATION", points: 250 });
+        if (monthCount === 28) bonuses.push({ label: "FULL MONTH", points: 500 });
+        points += bonuses.reduce((a, b) => a + b.points, 0);
+
+        set({
+          checkIns,
+          lastCheckIn: today,
+          checkInPoints: s.checkInPoints + points,
+          credits: s.credits + Math.round(points / 5),
+        });
+        return { day: today, points, bonuses, weekCount, monthCount };
+      },
+
+      completeWeeklyRecall: (week, xp) =>
+        set((s) =>
+          s.weeklyRecallDone.includes(week)
+            ? s
+            : {
+                weeklyRecallDone: [...s.weeklyRecallDone, week],
+                xp: s.xp + xp,
+                weeklyXp: s.weeklyXp + xp,
+                badges: s.badges.includes("total_recall") ? s.badges : [...s.badges, "total_recall"],
+              },
+        ),
 
       bumpShadow: () =>
         set((s) => {
