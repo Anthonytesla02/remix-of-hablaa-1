@@ -297,6 +297,17 @@ function SimulatePage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [msgs, thinking]);
 
+  // Arriving straight from a cleared lesson: drop them into today's practice scene.
+  useEffect(() => {
+    if (!daily || scene) return;
+    const s = dailyScene(daily);
+    if (s) void begin(s);
+    else void navigate({ to: "/dashboard" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daily]);
+
+
+
   
 
   async function speakCharacter(text: string) {
