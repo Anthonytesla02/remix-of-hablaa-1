@@ -293,6 +293,7 @@ function SimulatePage() {
   const navigate = useNavigate();
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
+  const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -561,11 +562,15 @@ function SimulatePage() {
     stopListenRef.current();
     stopSpeaking();
     const userTurns = msgs.filter((m) => m.role === "user").length;
-    const gained = award ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) : 0;
-    if (gained > 0) addXp(gained);
+    const weeklyBonus = scene?.weeklyWeek && award ? 120 : 0;
+    const gained = award
+      ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) + weeklyBonus
+      : 0;
+    if (gained > 0 && !scene?.weeklyWeek) addXp(gained);
+    if (scene?.weeklyWeek && award) completeWeeklyRecall(scene.weeklyWeek, gained);
 
-    // Daily practice run: celebrate the reward, then hand them back to the map.
-    if (scene?.daily && award) {
+    // Guided run (daily practice or weekly recall): celebrate, then back to the map.
+    if ((scene?.daily || scene?.weeklyWeek) && award) {
       setReward(gained);
       setListening(false);
       setDraft(null);
@@ -577,7 +582,7 @@ function SimulatePage() {
     setSuggestions([]);
     setEnded(false);
     setDraft(null);
-    if (daily) void navigate({ to: "/dashboard" });
+    if (daily || weekly !== undefined) void navigate({ to: "/dashboard" });
   }
 
 
@@ -652,6 +657,15 @@ function SimulatePage() {
           </button>
         </div>
       </div>
+
+      {scene.weeklyWeek && (
+        <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
+          <p className="hud text-[9px] text-secondary">WEEKLY RECALL OPERATION · WEEK {scene.weeklyWeek}</p>
+          <p className="mt-0.5 text-[11px]">
+            Everything from this week, live and unscripted. Clear the scene to bank the recall bonus.
+          </p>
+        </div>
+      )}
 
       {scene.daily && (
         <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
@@ -729,7 +743,7 @@ function SimulatePage() {
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
           >
-            {scene.daily ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
+            {scene.daily || scene.weeklyWeek ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
           </button>
         </div>
       ) : (
