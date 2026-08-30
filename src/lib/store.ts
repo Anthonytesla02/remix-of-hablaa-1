@@ -49,6 +49,14 @@ type State = {
   cloudSyncActive: boolean;
   cloudUserId: string | null;
   challengesDone: string[];
+  /** Day keys the operative has checked in on. */
+  checkIns: string[];
+  checkInPoints: number;
+  lastCheckIn: string | null;
+  /** Week numbers whose recall simulation has been cleared. */
+  weeklyRecallDone: number[];
+
+
 
   setProfile: (p: Profile) => void;
   resetAll: () => void;
