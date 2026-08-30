@@ -220,6 +220,28 @@ const SCENES: Scene[] = [
 ];
 
 
+/** Turns the lesson the learner just cleared into a bespoke practice scene. */
+function dailyScene(lessonId: string): Scene | null {
+  const l = lessonById(lessonId);
+  if (!l) return null;
+  const words = l.vocabulary.slice(0, 8).map((v) => v.es).join(", ");
+  return {
+    id: "cafe",
+    label: `Field practice — ${l.title}`,
+    character: "friendly local you have just met in the street",
+    setting: `an everyday street-corner conversation used to practise today's lesson "${l.title}" (${l.focus}). Mission: ${l.mission}`,
+    goals: [
+      ...l.objectives.slice(0, 3),
+      `keep steering the conversation so the learner reuses today's vocabulary: ${words}`,
+      "wrap up warmly once they have used today's patterns confidently",
+    ],
+    minExchanges: 6,
+    icon: GraduationCap,
+    special: true,
+    daily: true,
+  };
+}
+
 type Msg = {
   role: "user" | "character";
   text: string;
@@ -228,6 +250,8 @@ type Msg = {
 };
 
 function SimulatePage() {
+  const { daily } = Route.useSearch();
+  const navigate = useNavigate();
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
   const [scene, setScene] = useState<Scene | null>(null);
@@ -237,6 +261,9 @@ function SimulatePage() {
   const [suggestions, setSuggestions] = useState<{ target: string; translation: string }[]>([]);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
+  const [heard, setHeard] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState<{ text: string; translation: string } | null>(null);
   const [typed, setTyped] = useState("");
   const [useText, setUseText] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -246,6 +273,7 @@ function SimulatePage() {
     (CoachVerdict & { pending: string; history: Msg[] }) | null
   >(null);
   const [checking, setChecking] = useState(false);
+  const [reward, setReward] = useState(0);
 
   const ambienceRef = useRef<Ambience | null>(null);
   const stopListenRef = useRef<() => void>(() => {});
