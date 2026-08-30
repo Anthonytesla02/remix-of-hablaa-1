@@ -136,7 +136,12 @@ const initial = {
   cloudSyncActive: false,
   cloudUserId: null,
   challengesDone: [] as string[],
+  checkIns: [] as string[],
+  checkInPoints: 0,
+  lastCheckIn: null,
+  weeklyRecallDone: [] as number[],
 };
+
 
 export const useApp = create<State>()(
   persist(
