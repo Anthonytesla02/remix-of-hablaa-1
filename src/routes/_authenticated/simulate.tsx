@@ -76,6 +76,7 @@ type Scene = {
   minExchanges: number;
   icon: typeof Coffee;
   special?: boolean;
+  daily?: boolean;
 };
 
 const SCENES: Scene[] = [
