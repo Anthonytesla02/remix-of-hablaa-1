@@ -82,7 +82,9 @@ type Scene = {
   icon: typeof Coffee;
   special?: boolean;
   daily?: boolean;
+  weeklyWeek?: number;
 };
+
 
 const SCENES: Scene[] = [
   {
