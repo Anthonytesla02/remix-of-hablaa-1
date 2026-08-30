@@ -250,6 +250,36 @@ function dailyScene(lessonId: string): Scene | null {
   };
 }
 
+/** Builds a recall simulation covering everything taught in a given week. */
+function weeklyScene(week: number): Scene | null {
+  const w = courseWeeks.find((x) => x.week === week);
+  if (!w) return null;
+  const words = w.lessons
+    .flatMap((l) => l.vocabulary.slice(0, 5).map((v) => v.es))
+    .slice(0, 24)
+    .join(", ");
+  const patterns = w.lessons.map((l) => l.focus).join("; ");
+  return {
+    id: "cafe",
+    label: `Weekly recall — Week ${w.week}`,
+    character: "old friend catching up with you over coffee",
+    setting: `a relaxed catch-up conversation designed to recall everything from week ${w.week}: "${w.title}". Rotate through the week's topics rather than staying on one.`,
+    goals: [
+      `warm greeting and small talk reusing week ${w.week} patterns`,
+      `work through these focuses one by one: ${patterns}`,
+      `pull the learner into reusing this vocabulary: ${words}`,
+      "throw in one unexpected twist that forces them to combine two of the week's patterns",
+      "close with a recap of what they handled well",
+    ],
+    minExchanges: 12,
+    icon: CalendarCheck,
+    special: true,
+    weeklyWeek: w.week,
+  };
+}
+
+
+
 type Msg = {
   role: "user" | "character";
   text: string;
