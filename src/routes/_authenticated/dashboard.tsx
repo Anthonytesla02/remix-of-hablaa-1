@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Lock, Star, Check, Target, Brain, Crown, Radio, Flag, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Lock, Star, Check, Target, Brain, Crown, Radio, Flag, CheckCircle2, CalendarCheck, Sparkles } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { arcTitle, langById, missionDays, onboarding } from "@/lib/content";
 import {
   challengeForDay,
   courseKey,
+  courseWeeks,
   courseLessons,
   hasCourse,
   isCheckpointLesson,
@@ -13,7 +14,7 @@ import {
   unlockedSpecials,
 } from "@/lib/course";
 import { handlerSay } from "@/lib/handler-bus";
-import { useApp } from "@/lib/store";
+import { monthKey, useApp, weekKey, type CheckInResult } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -57,6 +58,11 @@ function DashboardPage() {
   const quests = useApp((s) => s.quests);
   const registerLogin = useApp((s) => s.registerLogin);
   const challengesDone = useApp((s) => s.challengesDone);
+  const checkIns = useApp((s) => s.checkIns);
+  const checkInPoints = useApp((s) => s.checkInPoints);
+  const doCheckIn = useApp((s) => s.checkIn);
+  const weeklyRecallDone = useApp((s) => s.weeklyRecallDone);
+  const [justChecked, setJustChecked] = useState<CheckInResult | null>(null);
   const completeChallenge = useApp((s) => s.completeChallenge);
 
   useEffect(() => {
@@ -112,6 +118,11 @@ function DashboardPage() {
   const gate = activeLesson ? passThreshold(activeLesson.id) : 0;
   const isCheckpoint = activeLesson ? isCheckpointLesson(activeLesson.id) : false;
   const allDone = nextIdx === -1;
+
+  // Weeks whose lessons are all cleared unlock a recall simulation.
+  const recallWeeks = courseOn
+    ? courseWeeks.filter((w) => w.lessons.every((l) => completedDays.includes(courseKey(l.id))))
+    : [];
 
   // Duolingo-style winding path: horizontal offsets cycle left → centre → right.
   const OFFSETS = [0, 46, 66, 46, 0, -46, -66, -46];
@@ -198,6 +209,52 @@ function DashboardPage() {
           <span>DEBRIEF VAULT · {due} ITEMS DUE</span>
           <span>RUN RECALL →</span>
         </Link>
+      )}
+
+      <CheckInCard
+        checkIns={checkIns}
+        points={checkInPoints}
+        result={justChecked}
+        onCheckIn={() => setJustChecked(doCheckIn())}
+      />
+
+      {recallWeeks.length > 0 && (
+        <section className="mt-6">
+          <p className="hud text-[10px] text-muted-foreground">WEEKLY RECALL OPERATIONS</p>
+          <ul className="mt-2 space-y-2">
+            {recallWeeks.map((w) => {
+              const done = weeklyRecallDone.includes(w.week);
+              return (
+                <li
+                  key={w.week}
+                  className={`rounded-sm border px-3 py-3 ${
+                    done ? "border-border bg-card" : "border-secondary/60 bg-secondary/10"
+                  }`}
+                >
+                  <p className="hud text-[10px] text-secondary">
+                    <CalendarCheck className="mr-1 inline h-3 w-3" /> WEEK {w.week} — {w.title.toUpperCase()}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Recall and use everything from this week in one live simulation.
+                  </p>
+                  {done ? (
+                    <p className="hud mt-2 flex items-center gap-1 text-[10px] text-primary">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> RECALL CLEARED
+                    </p>
+                  ) : (
+                    <Link
+                      to="/simulate"
+                      search={{ weekly: w.week }}
+                      className="hud mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-secondary/60 py-2.5 text-[10px] text-secondary"
+                    >
+                      <Radio className="h-3.5 w-3.5" /> RUN WEEKLY RECALL · +120 XP
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       <section className="mt-6">
@@ -321,5 +378,88 @@ function DashboardPage() {
         </div>
       </section>
     </AppFrame>
+  );
+}
+
+
+function CheckInCard({
+  checkIns,
+  points,
+  result,
+  onCheckIn,
+}: {
+  checkIns: string[];
+  points: number;
+  result: CheckInResult | null;
+  onCheckIn: () => void;
+}) {
+  const today = new Date();
+  const wk = weekKey(today);
+  const mk = monthKey(today);
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const checkedToday = checkIns.includes(todayKey);
+  const weekCount = checkIns.filter((d) => weekKey(new Date(d)) === wk).length;
+  const monthCount = checkIns.filter((d) => d.startsWith(mk)).length;
+
+  // Monday-first grid of the current week.
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return { key, label: ["M", "T", "W", "T", "F", "S", "S"][i]!, hit: checkIns.includes(key) };
+  });
+
+  return (
+    <section className="mt-6 rounded-sm border border-primary/50 bg-primary/5 p-4">
+      <p className="hud text-[10px] text-primary">
+        <CalendarCheck className="mr-1 inline h-3 w-3" /> ROLL CALL · {points} PTS
+      </p>
+      <div className="mt-3 grid grid-cols-7 gap-1.5">
+        {days.map((d, i) => (
+          <div key={d.key} className="flex flex-col items-center gap-1">
+            <span
+              className={`grid h-8 w-8 place-items-center rounded-full border text-[10px] ${
+                d.hit
+                  ? "border-primary bg-primary/20 text-primary"
+                  : "border-border text-muted-foreground"
+              }`}
+            >
+              {d.hit ? <Check className="h-4 w-4" /> : d.label}
+            </span>
+            <span className="hud text-[8px] text-muted-foreground">{i + 1}</span>
+          </div>
+        ))}
+      </div>
+      <div className="hud mt-3 flex justify-between text-[9px] text-muted-foreground">
+        <span>WEEK {weekCount}/7</span>
+        <span>MONTH {monthCount}</span>
+        <span>TOTAL {checkIns.length}</span>
+      </div>
+      {checkedToday ? (
+        <p className="hud mt-3 flex items-center justify-center gap-1 text-[10px] text-primary">
+          <CheckCircle2 className="h-3.5 w-3.5" /> CHECKED IN TODAY
+          {result ? ` · +${result.points} PTS` : ""}
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={onCheckIn}
+          className="hud mt-3 flex w-full items-center justify-center gap-2 rounded-sm bg-primary py-2.5 text-[10px] text-primary-foreground"
+        >
+          <Sparkles className="h-3.5 w-3.5" /> CHECK IN · +10 PTS
+        </button>
+      )}
+      {result && result.bonuses.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {result.bonuses.map((b) => (
+            <li key={b.label} className="hud text-[9px] text-secondary">
+              {b.label} · +{b.points} PTS
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
