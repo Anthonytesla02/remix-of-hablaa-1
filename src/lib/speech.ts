@@ -222,6 +222,87 @@ export function listenOnce(
   };
 }
 
+/**
+ * Continuous dictation: keeps recording until the caller stops it.
+ * The Web Speech API ends the session on the first pause, so we restart it
+ * automatically and accumulate the finalised transcript.
+ */
+export function listenContinuous(
+  locale: string,
+  handlers: {
+    onPartial?: (text: string) => void;
+    onFinal: (text: string) => void;
+    onError: (reason: string) => void;
+  },
+): () => void {
+  if (!sttSupported()) {
+    handlers.onError("unsupported");
+    return () => {};
+  }
+  const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  let rec: SR | null = null;
+  let stopped = false;
+  let finalText = "";
+  let fatal = false;
+
+  const build = () => {
+    const r: SR = new Ctor();
+    r.lang = locale;
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+    r.onresult = (e: any) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        const txt = res[0]?.transcript ?? "";
+        if (res.isFinal) finalText += (finalText ? " " : "") + txt.trim();
+        else interim += txt;
+      }
+      handlers.onPartial?.((finalText + " " + interim).trim());
+    };
+    r.onerror = (e: any) => {
+      const err = e?.error ?? "error";
+      // "no-speech" / "aborted" are recoverable — just restart the recogniser.
+      if (err !== "no-speech" && err !== "aborted") {
+        fatal = true;
+        stopped = true;
+        handlers.onError(err);
+      }
+    };
+    r.onend = () => {
+      if (stopped || fatal) {
+        if (!fatal) handlers.onFinal(finalText.trim());
+        return;
+      }
+      try {
+        r.start();
+      } catch {
+        handlers.onFinal(finalText.trim());
+      }
+    };
+    return r;
+  };
+
+  try {
+    rec = build();
+    rec.start();
+  } catch {
+    handlers.onError("error");
+    return () => {};
+  }
+
+  return () => {
+    if (stopped) return;
+    stopped = true;
+    try {
+      rec?.stop();
+    } catch {
+      handlers.onFinal(finalText.trim());
+    }
+  };
+}
+
 export function normalize(s: string) {
   return s
     .toLowerCase()

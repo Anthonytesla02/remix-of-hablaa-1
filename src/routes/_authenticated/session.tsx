@@ -151,6 +151,9 @@ function SessionPage() {
         sfx("transition");
         if (!passed) {
           resetRun();
+        } else if (lesson) {
+          // Straight into today's field practice — apply what was just learned.
+          void navigate({ to: "/simulate", search: { daily: lesson.id } });
         } else if (next) {
           void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
         } else {
@@ -162,6 +165,7 @@ function SessionPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished, celebrate, passed]);
+
 
   if (!profile || (!entry && !lesson)) return null;
 
@@ -310,7 +314,11 @@ function SessionPage() {
           {handoff && (
             <p className="hud mt-4 flex items-center gap-2 text-[10px] text-secondary">
               <span className="h-1.5 w-1.5 animate-ping rounded-full bg-secondary" />
-              {passed ? "LOADING NEXT FILE…" : "RE-RUNNING THIS FILE…"}
+              {passed
+                ? lesson
+                  ? "OPENING FIELD PRACTICE…"
+                  : "LOADING NEXT FILE…"
+                : "RE-RUNNING THIS FILE…"}
             </p>
           )}
         </div>

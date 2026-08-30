@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Coffee,
@@ -10,28 +10,39 @@ import {
   Car,
   BedDouble,
   Pill,
+  GraduationCap,
   AlertTriangle,
   Mic,
+  Square,
   Keyboard,
   Loader2,
   Volume2,
   VolumeX,
   Send,
+  RotateCcw,
   LogOut,
 } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
+import { Completion } from "@/components/Completion";
 import { Glossed } from "@/components/Glossed";
 import { Redaction } from "@/components/Redaction";
 import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
+import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
+import { lessonById } from "@/lib/course";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
-import { listenOnce, speak, stopSpeaking, sttSupported } from "@/lib/speech";
+import { sfx } from "@/lib/sfx";
+import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
+  validateSearch: (s: Record<string, unknown>): { daily?: string } => {
+    const daily = s['daily'] ? String(s['daily']) : undefined;
+    return daily ? { daily } : {};
+  },
   head: () => ({
     meta: [
       { title: "Simulation Deck — Operation Lingua" },
@@ -65,6 +76,7 @@ type Scene = {
   minExchanges: number;
   icon: typeof Coffee;
   special?: boolean;
+  daily?: boolean;
 };
 
 const SCENES: Scene[] = [
@@ -209,6 +221,28 @@ const SCENES: Scene[] = [
 ];
 
 
+/** Turns the lesson the learner just cleared into a bespoke practice scene. */
+function dailyScene(lessonId: string): Scene | null {
+  const l = lessonById(lessonId);
+  if (!l) return null;
+  const words = l.vocabulary.slice(0, 8).map((v) => v.es).join(", ");
+  return {
+    id: "cafe",
+    label: `Field practice — ${l.title}`,
+    character: "friendly local you have just met in the street",
+    setting: `an everyday street-corner conversation used to practise today's lesson "${l.title}" (${l.focus}). Mission: ${l.mission}`,
+    goals: [
+      ...l.objectives.slice(0, 3),
+      `keep steering the conversation so the learner reuses today's vocabulary: ${words}`,
+      "wrap up warmly once they have used today's patterns confidently",
+    ],
+    minExchanges: 6,
+    icon: GraduationCap,
+    special: true,
+    daily: true,
+  };
+}
+
 type Msg = {
   role: "user" | "character";
   text: string;
@@ -217,6 +251,8 @@ type Msg = {
 };
 
 function SimulatePage() {
+  const { daily } = Route.useSearch();
+  const navigate = useNavigate();
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
   const [scene, setScene] = useState<Scene | null>(null);
@@ -226,6 +262,9 @@ function SimulatePage() {
   const [suggestions, setSuggestions] = useState<{ target: string; translation: string }[]>([]);
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
+  const [heard, setHeard] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState<{ text: string; translation: string } | null>(null);
   const [typed, setTyped] = useState("");
   const [useText, setUseText] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -235,6 +274,7 @@ function SimulatePage() {
     (CoachVerdict & { pending: string; history: Msg[] }) | null
   >(null);
   const [checking, setChecking] = useState(false);
+  const [reward, setReward] = useState(0);
 
   const ambienceRef = useRef<Ambience | null>(null);
   const stopListenRef = useRef<() => void>(() => {});
@@ -256,6 +296,17 @@ function SimulatePage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [msgs, thinking]);
+
+  // Arriving straight from a cleared lesson: drop them into today's practice scene.
+  useEffect(() => {
+    if (!daily || scene) return;
+    const s = dailyScene(daily);
+    if (s) void begin(s);
+    else void navigate({ to: "/dashboard" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daily]);
+
+
 
   
 
@@ -408,19 +459,43 @@ function SimulatePage() {
   }
 
   function record() {
+    if (listening) {
+      stopListenRef.current();
+      return;
+    }
+    setHeard("");
+    setDraft(null);
     setListening(true);
-    stopListenRef.current = listenOnce(
-      locale,
-      (t) => {
+    sfx("record");
+    stopListenRef.current = listenContinuous(locale, {
+      onPartial: setHeard,
+      onFinal: (text) => {
         setListening(false);
-        void sendText(t.split(" | ")[0] ?? t);
+        sfx("stop");
+        const clean = text.trim();
+        if (!clean) return;
+        setDrafting(true);
+        setDraft({ text: clean, translation: "" });
+        void translateUtterance({ data: { text: clean, language } })
+          .then((t) => setDraft({ text: t.text || clean, translation: t.translation }))
+          .catch(() => setDraft({ text: clean, translation: "" }))
+          .finally(() => setDrafting(false));
       },
-      () => {
+      onError: () => {
         setListening(false);
         setUseText(true);
       },
-    );
+    });
   }
+
+  function sendDraft() {
+    const d = draft;
+    if (!d?.text.trim()) return;
+    setDraft(null);
+    setHeard("");
+    void sendText(d.text);
+  }
+
 
   function toggleMute() {
     const next = !muted;
@@ -439,15 +514,26 @@ function SimulatePage() {
     ambienceRef.current?.stop();
     stopListenRef.current();
     stopSpeaking();
-    if (award) {
-      const userTurns = msgs.filter((m) => m.role === "user").length;
-      addXp(Math.min(120, userTurns * 12));
+    const userTurns = msgs.filter((m) => m.role === "user").length;
+    const gained = award ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) : 0;
+    if (gained > 0) addXp(gained);
+
+    // Daily practice run: celebrate the reward, then hand them back to the map.
+    if (scene?.daily && award) {
+      setReward(gained);
+      setListening(false);
+      setDraft(null);
+      setTimeout(() => void navigate({ to: "/dashboard" }), 2400);
+      return;
     }
     setScene(null);
     setMsgs([]);
     setSuggestions([]);
     setEnded(false);
+    setDraft(null);
+    if (daily) void navigate({ to: "/dashboard" });
   }
+
 
   /* ── Scene picker ───────────────────────────────────────────────────── */
   if (!scene) {
@@ -521,6 +607,17 @@ function SimulatePage() {
         </div>
       </div>
 
+      {scene.daily && (
+        <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
+          <p className="hud text-[9px] text-secondary">DAILY FIELD PRACTICE</p>
+          <p className="mt-0.5 text-[11px]">
+            Use what you just learned in a live conversation. Finish the scene to collect your reward.
+          </p>
+        </div>
+      )}
+
+
+
       {stage && <p className="mt-3 text-[11px] italic text-muted-foreground">{stage}</p>}
 
       {objective && !ended && (
@@ -586,7 +683,7 @@ function SimulatePage() {
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
           >
-            BANK THE XP
+            {scene.daily ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
           </button>
         </div>
       ) : (
@@ -638,21 +735,54 @@ function SimulatePage() {
                 </button>
               )}
             </div>
+          ) : draft ? (
+            <div className="space-y-2 rounded-sm border border-secondary/50 bg-secondary/5 p-3">
+              <p className="hud text-[9px] text-secondary">CHECK YOUR TRANSMISSION</p>
+              <textarea
+                value={draft.text}
+                onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+                rows={2}
+                className="w-full rounded-sm border border-input bg-card px-3 py-2 text-base outline-none focus:border-secondary"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {drafting ? "Translating…" : draft.translation || "—"}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={record}
+                  className="hud flex-1 rounded-sm border border-border py-2.5 text-[10px] text-muted-foreground"
+                >
+                  <RotateCcw className="mr-1 inline h-3 w-3" /> RE-RECORD
+                </button>
+                <button
+                  onClick={sendDraft}
+                  disabled={!draft.text.trim() || thinking || checking}
+                  className="hud flex-1 rounded-sm bg-primary py-2.5 text-[10px] text-primary-foreground disabled:opacity-40"
+                >
+                  <Send className="mr-1 inline h-3 w-3" /> SEND
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-2">
               <button
                 onClick={record}
-                disabled={listening || thinking}
-                className={`flex w-full flex-col items-center gap-2 rounded-sm border py-6 ${
+                disabled={thinking || checking}
+                className={`flex w-full flex-col items-center gap-2 rounded-sm border py-6 disabled:opacity-50 ${
                   listening
                     ? "mic-live border-secondary bg-secondary/10 text-secondary"
                     : "border-border bg-card text-foreground"
                 }`}
               >
-                <Mic className="h-7 w-7" />
+                {listening ? <Square className="h-7 w-7" /> : <Mic className="h-7 w-7" />}
                 <span className="hud text-[10px]">
-                  {listening ? "LISTENING…" : "TAP AND SPEAK"}
+                  {listening ? "RECORDING… TAP TO STOP" : "TAP AND SPEAK"}
                 </span>
+                {listening && heard && (
+                  <span className="max-w-[85%] text-center text-[11px] text-muted-foreground">
+                    {heard}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setUseText(true)}
@@ -662,6 +792,7 @@ function SimulatePage() {
               </button>
             </div>
           )}
+
         </div>
       )}
       {correction && (
@@ -709,6 +840,15 @@ function SimulatePage() {
           </div>
         </div>
       )}
+      {reward > 0 && (
+        <Completion
+          title="FIELD PRACTICE COMPLETE"
+          subtitle={`+${reward} XP`}
+          tone="levelup"
+          duration={2200}
+        />
+      )}
     </AppFrame>
+
   );
 }
