@@ -216,6 +216,46 @@ export const useApp = create<State>()(
           return { stsStreak, badges };
         }),
 
+      checkIn: () => {
+        const s = get();
+        const today = dayKey();
+        if (s.checkIns.includes(today)) return null;
+
+        const checkIns = [...s.checkIns, today];
+        const wk = weekKey();
+        const mk = monthKey();
+        const weekCount = checkIns.filter((d) => weekKey(new Date(d)) === wk).length;
+        const monthCount = checkIns.filter((d) => d.startsWith(mk)).length;
+
+        const bonuses: { label: string; points: number }[] = [];
+        let points = 10;
+        if (weekCount === 7) bonuses.push({ label: "PERFECT WEEK", points: 70 });
+        if (weekCount % 3 === 0 && weekCount < 7) bonuses.push({ label: "3-DAY WEEK STREAK", points: 15 });
+        if (monthCount === 20) bonuses.push({ label: "MONTHLY DEDICATION", points: 250 });
+        if (monthCount === 28) bonuses.push({ label: "FULL MONTH", points: 500 });
+        points += bonuses.reduce((a, b) => a + b.points, 0);
+
+        set({
+          checkIns,
+          lastCheckIn: today,
+          checkInPoints: s.checkInPoints + points,
+          credits: s.credits + Math.round(points / 5),
+        });
+        return { day: today, points, bonuses, weekCount, monthCount };
+      },
+
+      completeWeeklyRecall: (week, xp) =>
+        set((s) =>
+          s.weeklyRecallDone.includes(week)
+            ? s
+            : {
+                weeklyRecallDone: [...s.weeklyRecallDone, week],
+                xp: s.xp + xp,
+                weeklyXp: s.weeklyXp + xp,
+                badges: s.badges.includes("total_recall") ? s.badges : [...s.badges, "total_recall"],
+              },
+        ),
+
       bumpShadow: () =>
         set((s) => {
           const shadowReps = s.shadowReps + 1;
