@@ -11,6 +11,7 @@ import {
   BedDouble,
   Pill,
   GraduationCap,
+  CalendarCheck,
   AlertTriangle,
   Mic,
   Square,
@@ -32,7 +33,7 @@ import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
 import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
-import { lessonById } from "@/lib/course";
+import { courseWeeks, lessonById } from "@/lib/course";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { sfx } from "@/lib/sfx";
 import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
@@ -288,7 +289,7 @@ type Msg = {
 };
 
 function SimulatePage() {
-  const { daily } = Route.useSearch();
+  const { daily, weekly } = Route.useSearch();
   const navigate = useNavigate();
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
@@ -336,12 +337,20 @@ function SimulatePage() {
 
   // Arriving straight from a cleared lesson: drop them into today's practice scene.
   useEffect(() => {
-    if (!daily || scene) return;
-    const s = dailyScene(daily);
-    if (s) void begin(s);
-    else void navigate({ to: "/dashboard" });
+    if (scene) return;
+    if (daily) {
+      const s = dailyScene(daily);
+      if (s) void begin(s);
+      else void navigate({ to: "/dashboard" });
+      return;
+    }
+    if (weekly !== undefined) {
+      const s = weeklyScene(weekly);
+      if (s) void begin(s);
+      else void navigate({ to: "/dashboard" });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [daily]);
+  }, [daily, weekly]);
 
 
 
