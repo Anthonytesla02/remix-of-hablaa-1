@@ -840,6 +840,15 @@ function SimulatePage() {
           </div>
         </div>
       )}
+      {reward > 0 && (
+        <Completion
+          title="FIELD PRACTICE COMPLETE"
+          subtitle={`+${reward} XP`}
+          tone="levelup"
+          duration={2200}
+        />
+      )}
     </AppFrame>
+
   );
 }
