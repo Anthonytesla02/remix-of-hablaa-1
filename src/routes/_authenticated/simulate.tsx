@@ -724,21 +724,54 @@ function SimulatePage() {
                 </button>
               )}
             </div>
+          ) : draft ? (
+            <div className="space-y-2 rounded-sm border border-secondary/50 bg-secondary/5 p-3">
+              <p className="hud text-[9px] text-secondary">CHECK YOUR TRANSMISSION</p>
+              <textarea
+                value={draft.text}
+                onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+                rows={2}
+                className="w-full rounded-sm border border-input bg-card px-3 py-2 text-base outline-none focus:border-secondary"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {drafting ? "Translating…" : draft.translation || "—"}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={record}
+                  className="hud flex-1 rounded-sm border border-border py-2.5 text-[10px] text-muted-foreground"
+                >
+                  <RotateCcw className="mr-1 inline h-3 w-3" /> RE-RECORD
+                </button>
+                <button
+                  onClick={sendDraft}
+                  disabled={!draft.text.trim() || thinking || checking}
+                  className="hud flex-1 rounded-sm bg-primary py-2.5 text-[10px] text-primary-foreground disabled:opacity-40"
+                >
+                  <Send className="mr-1 inline h-3 w-3" /> SEND
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-2">
               <button
                 onClick={record}
-                disabled={listening || thinking}
-                className={`flex w-full flex-col items-center gap-2 rounded-sm border py-6 ${
+                disabled={thinking || checking}
+                className={`flex w-full flex-col items-center gap-2 rounded-sm border py-6 disabled:opacity-50 ${
                   listening
                     ? "mic-live border-secondary bg-secondary/10 text-secondary"
                     : "border-border bg-card text-foreground"
                 }`}
               >
-                <Mic className="h-7 w-7" />
+                {listening ? <Square className="h-7 w-7" /> : <Mic className="h-7 w-7" />}
                 <span className="hud text-[10px]">
-                  {listening ? "LISTENING…" : "TAP AND SPEAK"}
+                  {listening ? "RECORDING… TAP TO STOP" : "TAP AND SPEAK"}
                 </span>
+                {listening && heard && (
+                  <span className="max-w-[85%] text-center text-[11px] text-muted-foreground">
+                    {heard}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setUseText(true)}
@@ -748,6 +781,7 @@ function SimulatePage() {
               </button>
             </div>
           )}
+
         </div>
       )}
       {correction && (
