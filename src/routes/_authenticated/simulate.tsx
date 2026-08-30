@@ -672,7 +672,7 @@ function SimulatePage() {
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
           >
-            BANK THE XP
+            {scene.daily ? "COLLECT REWARD · RETURN TO MAP" : "BANK THE XP"}
           </button>
         </div>
       ) : (
