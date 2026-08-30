@@ -607,6 +607,17 @@ function SimulatePage() {
         </div>
       </div>
 
+      {scene.daily && (
+        <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/10 px-2.5 py-2">
+          <p className="hud text-[9px] text-secondary">DAILY FIELD PRACTICE</p>
+          <p className="mt-0.5 text-[11px]">
+            Use what you just learned in a live conversation. Finish the scene to collect your reward.
+          </p>
+        </div>
+      )}
+
+
+
       {stage && <p className="mt-3 text-[11px] italic text-muted-foreground">{stage}</p>}
 
       {objective && !ended && (
