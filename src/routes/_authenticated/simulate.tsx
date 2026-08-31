@@ -515,19 +515,18 @@ function SimulatePage() {
     setListening(true);
     sfx("record");
     stopListenRef.current = listenContinuous(locale, {
-      onPartial: setHeard,
       onFinal: (text) => {
         setListening(false);
         sfx("stop");
         const clean = text.trim();
         if (!clean) return;
         setDrafting(true);
-        setDraft({ text: clean, translation: "" });
         void translateUtterance({ data: { text: clean, language } })
           .then((t) => setDraft({ text: t.text || clean, translation: t.translation }))
           .catch(() => setDraft({ text: clean, translation: "" }))
           .finally(() => setDrafting(false));
       },
+
       onError: () => {
         setListening(false);
         setUseText(true);
