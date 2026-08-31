@@ -255,12 +255,19 @@ export function listenContinuous(
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
-        const txt = res[0]?.transcript ?? "";
-        if (res.isFinal) finalText += (finalText ? " " : "") + txt.trim();
-        else interim += txt;
+        const txt = (res[0]?.transcript ?? "").trim();
+        if (!txt) continue;
+        if (res.isFinal) {
+          // Restarted sessions can replay the same phrase — drop repeats.
+          const lower = finalText.toLowerCase();
+          if (!lower.endsWith(txt.toLowerCase())) {
+            finalText += (finalText ? " " : "") + txt;
+          }
+        } else interim += txt;
       }
       handlers.onPartial?.((finalText + " " + interim).trim());
     };
+
     r.onerror = (e: any) => {
       const err = e?.error ?? "error";
       // "no-speech" / "aborted" are recoverable — just restart the recogniser.
