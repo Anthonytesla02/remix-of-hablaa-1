@@ -823,6 +823,11 @@ function SimulatePage() {
                 </button>
               </div>
             </div>
+          ) : drafting ? (
+            <div className="space-y-2 rounded-sm border border-secondary/50 bg-secondary/5 p-6 text-center">
+              <p className="hud text-[10px] text-secondary">DECODING TRANSMISSION…</p>
+              <p className="text-[11px] text-muted-foreground">Translating what you said.</p>
+            </div>
           ) : (
             <div className="space-y-2">
               <button
@@ -838,12 +843,8 @@ function SimulatePage() {
                 <span className="hud text-[10px]">
                   {listening ? "RECORDING… TAP TO STOP" : "TAP AND SPEAK"}
                 </span>
-                {listening && heard && (
-                  <span className="max-w-[85%] text-center text-[11px] text-muted-foreground">
-                    {heard}
-                  </span>
-                )}
               </button>
+
               <button
                 onClick={() => setUseText(true)}
                 className="hud w-full rounded-sm border border-border py-2.5 text-[10px] text-muted-foreground"
