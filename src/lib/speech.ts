@@ -245,27 +245,53 @@ export function listenContinuous(
   let finalText = "";
   let fatal = false;
 
+  const mergeTranscript = (current: string, incoming: string) => {
+    const previous = current.trim();
+    const next = incoming.trim();
+    if (!previous) return next;
+    if (!next) return previous;
+
+    const previousWords = previous.split(/\s+/);
+    const nextWords = next.split(/\s+/);
+    const comparable = (word: string) => normalize(word);
+    const previousKey = previousWords.map(comparable).join(" ");
+    const nextKey = nextWords.map(comparable).join(" ");
+
+    // Recognition restarts often replay the whole phrase with extra words.
+    if (nextKey.startsWith(previousKey)) return next;
+    if (previousKey.startsWith(nextKey) || previousKey.endsWith(nextKey)) return previous;
+
+    // Otherwise retain only the non-repeated tail of the new segment.
+    const maxOverlap = Math.min(previousWords.length, nextWords.length);
+    for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+      const tail = previousWords.slice(-overlap).map(comparable).join(" ");
+      const head = nextWords.slice(0, overlap).map(comparable).join(" ");
+      if (tail === head) {
+        return [...previousWords, ...nextWords.slice(overlap)].join(" ");
+      }
+    }
+
+    return `${previous} ${next}`;
+  };
+
   const build = () => {
     const r: SR = new Ctor();
     r.lang = locale;
     r.continuous = true;
-    r.interimResults = true;
+    // The simulation only shows text after the user stops. Interim hypotheses
+    // are cumulative and were the source of repeated, expanding phrases.
+    r.interimResults = false;
     r.maxAlternatives = 1;
     r.onresult = (e: any) => {
-      let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         const txt = (res[0]?.transcript ?? "").trim();
         if (!txt) continue;
         if (res.isFinal) {
-          // Restarted sessions can replay the same phrase — drop repeats.
-          const lower = finalText.toLowerCase();
-          if (!lower.endsWith(txt.toLowerCase())) {
-            finalText += (finalText ? " " : "") + txt;
-          }
-        } else interim += txt;
+          finalText = mergeTranscript(finalText, txt);
+        }
       }
-      handlers.onPartial?.((finalText + " " + interim).trim());
+      handlers.onPartial?.(finalText);
     };
 
     r.onerror = (e: any) => {
