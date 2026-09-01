@@ -49,7 +49,7 @@ function CompanionPage() {
   const chosen = roster.find((c) => c.id === charId) ?? roster[0]!;
 
   function confirm() {
-    sfx("confirm");
+    sfx("levelup");
     setCompanion({
       characterId: charId,
       personalityId: persId,
