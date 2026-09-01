@@ -49,7 +49,7 @@ function CompanionPage() {
   const chosen = roster.find((c) => c.id === charId) ?? roster[0]!;
 
   function confirm() {
-    sfx.play("confirm");
+    sfx("confirm");
     setCompanion({
       characterId: charId,
       personalityId: persId,
@@ -78,7 +78,7 @@ function CompanionPage() {
               <li key={c.id}>
                 <button
                   onClick={() => {
-                    sfx.play("tap");
+                    sfx("tap");
                     setCharId(c.id);
                   }}
                   className={`w-full rounded-sm border px-3 py-3 text-left ${
@@ -108,7 +108,7 @@ function CompanionPage() {
               <li key={p.id}>
                 <button
                   onClick={() => {
-                    sfx.play("tap");
+                    sfx("tap");
                     setPersId(p.id);
                     setSlang(p.slang);
                   }}
@@ -190,7 +190,7 @@ function Dial({
           <button
             key={n}
             onClick={() => {
-              sfx.play("tap");
+              sfx("tap");
               onChange(i);
             }}
             className={`hud rounded-sm border px-1 py-2 text-[9px] ${
@@ -219,7 +219,7 @@ function Toggle({
   return (
     <button
       onClick={() => {
-        sfx.play("tap");
+        sfx("tap");
         set(!on);
       }}
       className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left"
