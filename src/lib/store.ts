@@ -166,6 +166,10 @@ const initial = {
   checkInPoints: 0,
   lastCheckIn: null,
   weeklyRecallDone: [] as number[],
+  companion: null as CompanionConfig | null,
+  bondPoints: 0,
+  mistakeMemory: {} as Record<string, MistakeNote>,
+
 };
 
 
