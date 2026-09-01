@@ -38,6 +38,8 @@ import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { sfx } from "@/lib/sfx";
 import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
+import { useCompanion } from "@/lib/use-companion";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
   validateSearch: (s: Record<string, unknown>): { daily?: string; weekly?: number } => {
@@ -294,6 +296,9 @@ function SimulatePage() {
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
+  const noteMistake = useApp((s) => s.noteMistake);
+  const addBond = useApp((s) => s.addBond);
+  const { brief, character, bond, ready: hasCompanion } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -357,6 +362,11 @@ function SimulatePage() {
 
   
 
+  /** The scene role, played by the learner's chosen native character. */
+  function inCharacter(role: string) {
+    return character ? `${character.name} (${character.age}, ${character.region}) playing the ${role}` : role;
+  }
+
   async function speakCharacter(text: string) {
     if (muted) return;
     ambienceRef.current?.duck(true);
@@ -374,7 +384,8 @@ function SimulatePage() {
         data: {
           language,
           setting: scene.setting,
-          character: scene.character,
+          character: inCharacter(scene.character),
+          companion: brief,
           goals: scene.goals,
           minExchanges: scene.minExchanges,
           exchanges,
@@ -414,6 +425,7 @@ function SimulatePage() {
       }
       if (reply.ended) {
         setEnded(true);
+        addBond(30);
         handlerReact("simEnd", "hype");
       }
       void speakCharacter(reply.reply);
@@ -439,7 +451,8 @@ function SimulatePage() {
         data: {
           language,
           setting: s.setting,
-          character: s.character,
+          character: inCharacter(s.character),
+          companion: brief,
           goals: s.goals,
           minExchanges: s.minExchanges,
           exchanges: 0,
@@ -474,9 +487,11 @@ function SimulatePage() {
           characterLine: [...history].reverse().find((m) => m.role === "character")?.text ?? "",
           userText: clean,
           options: suggestions.map((s) => s.target),
+          companion: brief,
         },
       });
       if (!verdict.correct) {
+        if (verdict.tag) noteMistake(verdict.tag, verdict.why);
         setSuggestions([]);
         setCorrection({ ...verdict, pending: clean, history });
         handlerReact("wrong", "tough");
