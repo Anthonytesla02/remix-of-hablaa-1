@@ -298,7 +298,7 @@ function SimulatePage() {
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const noteMistake = useApp((s) => s.noteMistake);
   const addBond = useApp((s) => s.addBond);
-  const { brief, character, bond, ready: hasCompanion } = useCompanion();
+  const { brief, character, bond, personality, ready: hasCompanion } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -581,6 +581,7 @@ function SimulatePage() {
       ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) + weeklyBonus
       : 0;
     if (gained > 0 && !scene?.weeklyWeek) addXp(gained);
+    if (award) addBond(Math.min(60, userTurns * 5));
     if (scene?.weeklyWeek && award) completeWeeklyRecall(scene.weeklyWeek, gained);
 
     // Guided run (daily practice or weekly recall): celebrate, then back to the map.
@@ -609,6 +610,34 @@ function SimulatePage() {
           Pick a location. Ambient sound comes up, a local starts talking, and you hold the
           conversation — speak or type, and ask your own questions too.
         </p>
+
+        <Link
+          to="/companion"
+          className={`mt-4 block rounded-sm border px-3 py-3 ${
+            hasCompanion ? "border-border bg-card" : "border-primary bg-primary/10"
+          }`}
+        >
+          {hasCompanion && character ? (
+            <>
+              <p className="hud text-[10px] text-muted-foreground">YOUR PARTNER</p>
+              <p className="hud mt-1 text-[11px]">
+                {character.flag} {character.name.toUpperCase()} · {personality.label.toUpperCase()}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {bond.current.label} · {Math.round(bond.progress * 100)}% to{" "}
+                {bond.next?.label ?? "max"} — tap to change
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="hud text-[10px] text-primary">CHOOSE YOUR LANGUAGE PARTNER</p>
+              <p className="mt-1 text-[11px]">
+                Sofía from Guadalajara? A drill sergeant? Pick who talks to you — it changes how
+                you're taught, not just the voice.
+              </p>
+            </>
+          )}
+        </Link>
         <div className="mt-5 grid grid-cols-2 gap-2.5">
           {SCENES.map((s) => {
             const Icon = s.icon;
@@ -652,7 +681,9 @@ function SimulatePage() {
             LIVE · {scene.label.toUpperCase()}
             {scene.special ? " · SPECIAL OP" : ""}
           </p>
-          <p className="truncate text-[10px] text-muted-foreground">{scene.character}</p>
+          <p className="truncate text-[10px] text-muted-foreground">
+            {character ? `${character.flag} ${character.name} — ${scene.character}` : scene.character}
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
