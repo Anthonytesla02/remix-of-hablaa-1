@@ -56,6 +56,13 @@ type State = {
   /** Week numbers whose recall simulation has been cleared. */
   weeklyRecallDone: number[];
 
+  /** Who your language partner is. Null until they pick one. */
+  companion: CompanionConfig | null;
+  /** Relationship progress with the chosen character. */
+  bondPoints: number;
+  /** What the AI remembers you keep getting wrong. */
+  mistakeMemory: Record<string, MistakeNote>;
+
 
 
   setProfile: (p: Profile) => void;
@@ -75,7 +82,26 @@ type State = {
   setCloudSync: (active: boolean, userId: string | null) => void;
   checkIn: () => CheckInResult | null;
   completeWeeklyRecall: (week: number, xp: number) => void;
+  setCompanion: (c: Partial<CompanionConfig>) => void;
+  addBond: (n: number) => void;
+  noteMistake: (tag: string, detail: string) => void;
 };
+
+export type CompanionConfig = {
+  personalityId: string;
+  characterId: string;
+  /** 0-3 how much street slang they use. */
+  slang: number;
+  /** 0-3 roast intensity when you get it wrong. */
+  roast: number;
+  /** Teach how people actually speak instead of textbook forms. */
+  localMode: boolean;
+  /** They never translate unless you ask. */
+  noTranslate: boolean;
+};
+
+export type MistakeNote = { tag: string; detail: string; count: number; lastAt: number };
+
 
 export type CheckInResult = {
   day: string;
@@ -140,6 +166,10 @@ const initial = {
   checkInPoints: 0,
   lastCheckIn: null,
   weeklyRecallDone: [] as number[],
+  companion: null as CompanionConfig | null,
+  bondPoints: 0,
+  mistakeMemory: {} as Record<string, MistakeNote>,
+
 };
 
 
@@ -269,6 +299,40 @@ export const useApp = create<State>()(
 
       setCloudSync: (active, userId) => set({ cloudSyncActive: active, cloudUserId: userId }),
 
+      setCompanion: (c) =>
+        set((s) => ({
+          companion: {
+            personalityId: "tutor",
+            characterId: "sofia",
+            slang: 1,
+            roast: 1,
+            localMode: true,
+            noTranslate: false,
+            ...(s.companion ?? {}),
+            ...c,
+          },
+        })),
+
+      addBond: (n) => set((s) => ({ bondPoints: Math.max(0, s.bondPoints + n) })),
+
+      noteMistake: (tag, detail) =>
+        set((s) => {
+          const key = tag.toLowerCase().slice(0, 40);
+          const prev = s.mistakeMemory[key];
+          return {
+            mistakeMemory: {
+              ...s.mistakeMemory,
+              [key]: {
+                tag: key,
+                detail: detail.slice(0, 160),
+                count: (prev?.count ?? 0) + 1,
+                lastAt: Date.now(),
+              },
+            },
+          };
+        }),
+
+
       completeSession: (summary, questFlags) => {
         const s = get();
         const today = dayKey();
@@ -321,6 +385,7 @@ export const useApp = create<State>()(
           badges.add("border_crosser");
 
         set({
+          bondPoints: s.bondPoints + 20,
           xp: s.xp + totalXp,
           weeklyXp: s.weeklyXp + totalXp,
           credits: credits + creditsEarned,

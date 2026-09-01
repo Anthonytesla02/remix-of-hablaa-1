@@ -38,6 +38,8 @@ import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { sfx } from "@/lib/sfx";
 import { listenContinuous, speak, stopSpeaking, sttSupported } from "@/lib/speech";
 import { useApp } from "@/lib/store";
+import { useCompanion } from "@/lib/use-companion";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/simulate")({
   validateSearch: (s: Record<string, unknown>): { daily?: string; weekly?: number } => {
@@ -294,6 +296,9 @@ function SimulatePage() {
   const profile = useApp((s) => s.profile);
   const addXp = useApp((s) => s.addXp);
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
+  const noteMistake = useApp((s) => s.noteMistake);
+  const addBond = useApp((s) => s.addBond);
+  const { brief, character, bond, personality, ready: hasCompanion } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -357,6 +362,11 @@ function SimulatePage() {
 
   
 
+  /** The scene role, played by the learner's chosen native character. */
+  function inCharacter(role: string) {
+    return character ? `${character.name} (${character.age}, ${character.region}) playing the ${role}` : role;
+  }
+
   async function speakCharacter(text: string) {
     if (muted) return;
     ambienceRef.current?.duck(true);
@@ -374,7 +384,8 @@ function SimulatePage() {
         data: {
           language,
           setting: scene.setting,
-          character: scene.character,
+          character: inCharacter(scene.character),
+          companion: brief,
           goals: scene.goals,
           minExchanges: scene.minExchanges,
           exchanges,
@@ -414,6 +425,7 @@ function SimulatePage() {
       }
       if (reply.ended) {
         setEnded(true);
+        addBond(30);
         handlerReact("simEnd", "hype");
       }
       void speakCharacter(reply.reply);
@@ -439,7 +451,8 @@ function SimulatePage() {
         data: {
           language,
           setting: s.setting,
-          character: s.character,
+          character: inCharacter(s.character),
+          companion: brief,
           goals: s.goals,
           minExchanges: s.minExchanges,
           exchanges: 0,
@@ -474,9 +487,11 @@ function SimulatePage() {
           characterLine: [...history].reverse().find((m) => m.role === "character")?.text ?? "",
           userText: clean,
           options: suggestions.map((s) => s.target),
+          companion: brief,
         },
       });
       if (!verdict.correct) {
+        if (verdict.tag) noteMistake(verdict.tag, verdict.why);
         setSuggestions([]);
         setCorrection({ ...verdict, pending: clean, history });
         handlerReact("wrong", "tough");
@@ -566,6 +581,7 @@ function SimulatePage() {
       ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) + weeklyBonus
       : 0;
     if (gained > 0 && !scene?.weeklyWeek) addXp(gained);
+    if (award) addBond(Math.min(60, userTurns * 5));
     if (scene?.weeklyWeek && award) completeWeeklyRecall(scene.weeklyWeek, gained);
 
     // Guided run (daily practice or weekly recall): celebrate, then back to the map.
@@ -594,6 +610,34 @@ function SimulatePage() {
           Pick a location. Ambient sound comes up, a local starts talking, and you hold the
           conversation — speak or type, and ask your own questions too.
         </p>
+
+        <Link
+          to="/companion"
+          className={`mt-4 block rounded-sm border px-3 py-3 ${
+            hasCompanion ? "border-border bg-card" : "border-primary bg-primary/10"
+          }`}
+        >
+          {hasCompanion && character ? (
+            <>
+              <p className="hud text-[10px] text-muted-foreground">YOUR PARTNER</p>
+              <p className="hud mt-1 text-[11px]">
+                {character.flag} {character.name.toUpperCase()} · {personality.label.toUpperCase()}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {bond.current.label} · {Math.round(bond.progress * 100)}% to{" "}
+                {bond.next?.label ?? "max"} — tap to change
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="hud text-[10px] text-primary">CHOOSE YOUR LANGUAGE PARTNER</p>
+              <p className="mt-1 text-[11px]">
+                Sofía from Guadalajara? A drill sergeant? Pick who talks to you — it changes how
+                you're taught, not just the voice.
+              </p>
+            </>
+          )}
+        </Link>
         <div className="mt-5 grid grid-cols-2 gap-2.5">
           {SCENES.map((s) => {
             const Icon = s.icon;
@@ -637,7 +681,9 @@ function SimulatePage() {
             LIVE · {scene.label.toUpperCase()}
             {scene.special ? " · SPECIAL OP" : ""}
           </p>
-          <p className="truncate text-[10px] text-muted-foreground">{scene.character}</p>
+          <p className="truncate text-[10px] text-muted-foreground">
+            {character ? `${character.flag} ${character.name} — ${scene.character}` : scene.character}
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
