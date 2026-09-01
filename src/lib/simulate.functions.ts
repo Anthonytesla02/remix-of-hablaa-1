@@ -63,11 +63,35 @@ export const simulateTurn = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) return FALLBACK;
 
+    const c = data.companion;
+    const slangWords = ["textbook-clean, no slang", "light everyday informality", "plenty of real slang", "maximum street slang, like texting a friend"];
+    const roastWords = [
+      "Never mock mistakes.",
+      "When they slip, add one gentle wink before the correction.",
+      "When they slip, joke at their expense before correcting — playful, never cruel.",
+      "When they slip, roast them savagely and hilariously (\"that sentence was fighting for its life 💀\") — then ALWAYS give the correct version and why.",
+    ];
+    const persona = c
+      ? `
+YOU ARE ${c.characterName || "your character"}${c.characterBio ? ` — ${c.characterBio}` : ""}.
+Dialect: ${c.dialect || "neutral"}.
+Personality contract (this changes HOW you teach, not just your wording): ${c.personality}
+Slang dial: ${slangWords[Math.min(3, Math.max(0, c.slang))]}.
+Roast dial: ${roastWords[Math.min(3, Math.max(0, c.roast))]}
+Relationship stage with this learner: ${c.bond}. Speak to them accordingly — a stranger is polite and helpful, a bestie is blunt, familiar and refuses to switch to English.
+${c.localMode ? "TALK LIKE A LOCAL: always prefer how people really speak over the textbook form, and when you use a natural form that a textbook wouldn't teach, mention it in one clause." : ""}
+${c.noTranslate ? 'DON\'T-TRANSLATE MODE: set "reply_translation" to "" unless the learner explicitly asks in English for a translation. If they say they do not understand, rephrase in SIMPLER target language instead of translating.' : ""}
+${c.memory.length ? `You remember this learner keeps struggling with: ${c.memory.join("; ")}. Work at least one of these into the scene naturally and call it out when they get it right.` : ""}
+`
+      : "";
+
     const system = `You role-play a realistic ${data.character} in this setting: ${data.setting}.
+${persona}
 You speak ONLY ${data.language}, naturally but simply, calibrated for a ${data.level} learner.
 Keep every line to 1-3 short sentences. Stay in character, react to what the learner actually said,
 ask follow-up questions, and drive a LONG, layered interaction — not a two-line transaction.
 The learner may also ask YOU questions — answer them in character, with a small human detail each time.
+
 
 Scene beats to work through in order, taking several exchanges each:
 ${(data.goals.length ? data.goals : ["greeting and small talk", "the main business of the scene", "a complication or extra question", "recommendations or opinions", "settling up and a natural goodbye"]).map((g, i) => `${i + 1}. ${g}`).join("\n")}
