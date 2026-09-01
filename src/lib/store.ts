@@ -56,6 +56,13 @@ type State = {
   /** Week numbers whose recall simulation has been cleared. */
   weeklyRecallDone: number[];
 
+  /** Who your language partner is. Null until they pick one. */
+  companion: CompanionConfig | null;
+  /** Relationship progress with the chosen character. */
+  bondPoints: number;
+  /** What the AI remembers you keep getting wrong. */
+  mistakeMemory: Record<string, MistakeNote>;
+
 
 
   setProfile: (p: Profile) => void;
@@ -75,7 +82,26 @@ type State = {
   setCloudSync: (active: boolean, userId: string | null) => void;
   checkIn: () => CheckInResult | null;
   completeWeeklyRecall: (week: number, xp: number) => void;
+  setCompanion: (c: Partial<CompanionConfig>) => void;
+  addBond: (n: number) => void;
+  noteMistake: (tag: string, detail: string) => void;
 };
+
+export type CompanionConfig = {
+  personalityId: string;
+  characterId: string;
+  /** 0-3 how much street slang they use. */
+  slang: number;
+  /** 0-3 roast intensity when you get it wrong. */
+  roast: number;
+  /** Teach how people actually speak instead of textbook forms. */
+  localMode: boolean;
+  /** They never translate unless you ask. */
+  noTranslate: boolean;
+};
+
+export type MistakeNote = { tag: string; detail: string; count: number; lastAt: number };
+
 
 export type CheckInResult = {
   day: string;
