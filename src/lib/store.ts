@@ -299,6 +299,40 @@ export const useApp = create<State>()(
 
       setCloudSync: (active, userId) => set({ cloudSyncActive: active, cloudUserId: userId }),
 
+      setCompanion: (c) =>
+        set((s) => ({
+          companion: {
+            personalityId: "tutor",
+            characterId: "sofia",
+            slang: 1,
+            roast: 1,
+            localMode: true,
+            noTranslate: false,
+            ...(s.companion ?? {}),
+            ...c,
+          },
+        })),
+
+      addBond: (n) => set((s) => ({ bondPoints: Math.max(0, s.bondPoints + n) })),
+
+      noteMistake: (tag, detail) =>
+        set((s) => {
+          const key = tag.toLowerCase().slice(0, 40);
+          const prev = s.mistakeMemory[key];
+          return {
+            mistakeMemory: {
+              ...s.mistakeMemory,
+              [key]: {
+                tag: key,
+                detail: detail.slice(0, 160),
+                count: (prev?.count ?? 0) + 1,
+                lastAt: Date.now(),
+              },
+            },
+          };
+        }),
+
+
       completeSession: (summary, questFlags) => {
         const s = get();
         const today = dayKey();
