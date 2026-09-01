@@ -6,6 +6,19 @@ const Turn = z.object({
   text: z.string().max(600),
 });
 
+const CompanionBrief = z.object({
+  personality: z.string().max(600).default(""),
+  characterName: z.string().max(60).default(""),
+  characterBio: z.string().max(300).default(""),
+  dialect: z.string().max(300).default(""),
+  slang: z.number().int().min(0).max(3).default(1),
+  roast: z.number().int().min(0).max(3).default(1),
+  bond: z.string().max(40).default("Stranger"),
+  localMode: z.boolean().default(true),
+  noTranslate: z.boolean().default(false),
+  memory: z.array(z.string().max(200)).max(6).default([]),
+});
+
 const SimInput = z.object({
   language: z.string().min(2).max(40),
   setting: z.string().min(2).max(300),
@@ -17,7 +30,9 @@ const SimInput = z.object({
   level: z.string().min(1).max(40).default("absolute beginner"),
   history: z.array(Turn).max(120).default([]),
   userText: z.string().max(600).default(""),
+  companion: CompanionBrief.optional(),
 });
+
 
 export type SimReply = {
   reply: string;
