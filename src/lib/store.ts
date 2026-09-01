@@ -385,6 +385,7 @@ export const useApp = create<State>()(
           badges.add("border_crosser");
 
         set({
+          bondPoints: s.bondPoints + 20,
           xp: s.xp + totalXp,
           weeklyXp: s.weeklyXp + totalXp,
           credits: credits + creditsEarned,

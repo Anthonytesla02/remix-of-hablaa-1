@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
 import { useApp, useClearance } from "@/lib/store";
+import { useCompanion } from "@/lib/use-companion";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -34,6 +36,7 @@ function ProfilePage() {
   const setSetting = useApp((s) => s.setSetting);
   const resetAll = useApp((s) => s.resetAll);
   const clearance = useClearance();
+  const { character, personality, bond, memory, ready: hasCompanion } = useCompanion();
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
@@ -75,6 +78,51 @@ function ProfilePage() {
         </dl>
         <p className="mt-3 text-xs">{clearance.current.can_do_summary}</p>
       </section>
+
+      <Link to="/companion" className="mt-4 block rounded-sm border border-border bg-card p-3">
+        <p className="hud text-[10px] text-muted-foreground">LANGUAGE PARTNER</p>
+        {hasCompanion && character ? (
+          <>
+            <p className="hud mt-1 text-[11px]">
+              {character.flag} {character.name.toUpperCase()} · {personality.emoji}{" "}
+              {personality.label.toUpperCase()}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{character.bio}</p>
+            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-secondary"
+                style={{ width: `${Math.round(bond.progress * 100)}%` }}
+              />
+            </div>
+            <p className="hud mt-1.5 text-[9px] text-primary">
+              {bond.current.label.toUpperCase()}
+              {bond.next ? ` → ${bond.next.label.toUpperCase()}` : ""}
+            </p>
+          </>
+        ) : (
+          <p className="mt-1 text-[11px]">
+            No partner assigned yet. Pick who teaches you — tap to choose.
+          </p>
+        )}
+      </Link>
+
+      {memory.length > 0 && (
+        <section className="mt-4 rounded-sm border border-destructive/40 bg-destructive/5 p-3">
+          <p className="hud text-[10px] text-destructive">
+            WHAT {character ? character.name.toUpperCase() : "YOUR PARTNER"} REMEMBERS
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {memory.map((m) => (
+              <li key={m} className="text-[11px] text-muted-foreground">
+                • {m}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            These get worked back into your simulations until you stop missing them.
+          </p>
+        </section>
+      )}
 
       <section className="mt-6">
         <p className="hud text-[10px] text-muted-foreground">
