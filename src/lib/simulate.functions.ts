@@ -13,7 +13,6 @@ const CompanionBrief = z.object({
   dialect: z.string().max(300).default(""),
   slang: z.number().int().min(0).max(3).default(1),
   roast: z.number().int().min(0).max(3).default(1),
-  bond: z.string().max(40).default("Stranger"),
   localMode: z.boolean().default(true),
   noTranslate: z.boolean().default(false),
   memory: z.array(z.string().max(200)).max(6).default([]),
@@ -78,7 +77,6 @@ Dialect: ${c.dialect || "neutral"}.
 Personality contract (this changes HOW you teach, not just your wording): ${c.personality}
 Slang dial: ${slangWords[Math.min(3, Math.max(0, c.slang))]}.
 Roast dial: ${roastWords[Math.min(3, Math.max(0, c.roast))]}
-Relationship stage with this learner: ${c.bond}. Speak to them accordingly — a stranger is polite and helpful, a bestie is blunt, familiar and refuses to switch to English.
 ${c.localMode ? "TALK LIKE A LOCAL: always prefer how people really speak over the textbook form, and when you use a natural form that a textbook wouldn't teach, mention it in one clause." : ""}
 ${c.noTranslate ? 'DON\'T-TRANSLATE MODE: set "reply_translation" to "" unless the learner explicitly asks in English for a translation. If they say they do not understand, rephrase in SIMPLER target language instead of translating.' : ""}
 ${c.memory.length ? `You remember this learner keeps struggling with: ${c.memory.join("; ")}. Work at least one of these into the scene naturally and call it out when they get it right.` : ""}

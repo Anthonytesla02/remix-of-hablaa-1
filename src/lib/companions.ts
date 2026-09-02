@@ -3,7 +3,7 @@
  *
  * A companion = personality archetype + native character + dials (slang, energy,
  * roast level, translation policy). It changes the model's actual teaching
- * behaviour, not just its wording, and it carries a bond level that grows with
+ * behaviour, not just its wording, 
  * every cleared mission and simulation.
  */
 
@@ -187,27 +187,6 @@ export function personalityById(id: string | null | undefined) {
   return PERSONALITIES.find((p) => p.id === id) ?? PERSONALITIES[0]!;
 }
 
-/* ------------------------------------------------------------------ *
- * Bond progression — the reason to come back tomorrow.                 *
- * ------------------------------------------------------------------ */
-
-export const BOND_LEVELS = [
-  { level: 0, label: "Stranger", at: 0, unlock: "Full English support." },
-  { level: 1, label: "Acquaintance", at: 60, unlock: "They start remembering your weak spots." },
-  { level: 2, label: "Friend", at: 200, unlock: "More slang, fewer translations." },
-  { level: 3, label: "Close Friend", at: 500, unlock: "They tease you and share their own life." },
-  { level: 4, label: "Bestie", at: 1000, unlock: "Target language only, no hand-holding." },
-];
-
-export function bondFor(points: number) {
-  let current = BOND_LEVELS[0]!;
-  for (const l of BOND_LEVELS) if (points >= l.at) current = l;
-  const next = BOND_LEVELS.find((l) => l.at > points) ?? null;
-  const span = next ? next.at - current.at : 1;
-  const progress = next ? (points - current.at) / span : 1;
-  return { current, next, progress: Math.max(0, Math.min(1, progress)) };
-}
-
 export const ROAST_LEVELS = [
   { id: 0, label: "Off", note: "Straight corrections only." },
   { id: 1, label: "Gentle", note: "A wink with the fix." },
@@ -223,7 +202,6 @@ export type CompanionBrief = {
   dialect: string;
   slang: number;
   roast: number;
-  bond: string;
   localMode: boolean;
   noTranslate: boolean;
   memory: string[];
