@@ -36,7 +36,7 @@ function CompanionPage() {
   const navigate = useNavigate();
   const setCompanion = useApp((s) => s.setCompanion);
   const langId = useApp((s) => s.profile?.langId ?? "spanish");
-  const { config, bond, character, personality } = useCompanion();
+  const { config, character, personality } = useCompanion();
 
   const roster = charactersFor(langId);
   const [charId, setCharId] = useState(config?.characterId ?? character?.id ?? roster[0]!.id);
@@ -146,19 +146,6 @@ function CompanionPage() {
           on={noTranslate}
           set={setNoTranslate}
         />
-      </section>
-
-      <section className="mt-5 rounded-sm border border-border bg-card p-3">
-        <p className="hud text-[10px] text-muted-foreground">RELATIONSHIP</p>
-        <p className="hud mt-1 text-[11px] text-primary">{bond.current.label.toUpperCase()}</p>
-        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-secondary" style={{ width: `${Math.round(bond.progress * 100)}%` }} />
-        </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          {bond.next
-            ? `Next: ${bond.next.label} — ${bond.next.unlock}`
-            : `Maxed. ${bond.current.unlock}`}
-        </p>
       </section>
 
       <button

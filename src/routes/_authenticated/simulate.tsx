@@ -297,8 +297,7 @@ function SimulatePage() {
   const addXp = useApp((s) => s.addXp);
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const noteMistake = useApp((s) => s.noteMistake);
-  const addBond = useApp((s) => s.addBond);
-  const { brief, character, bond, personality, ready: hasCompanion } = useCompanion();
+  const { brief, character, personality, ready: hasCompanion } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -425,7 +424,6 @@ function SimulatePage() {
       }
       if (reply.ended) {
         setEnded(true);
-        addBond(30);
         handlerReact("simEnd", "hype");
       }
       void speakCharacter(reply.reply);
@@ -581,7 +579,6 @@ function SimulatePage() {
       ? Math.min(120, userTurns * 12) + (scene?.daily ? 40 : 0) + weeklyBonus
       : 0;
     if (gained > 0 && !scene?.weeklyWeek) addXp(gained);
-    if (award) addBond(Math.min(60, userTurns * 5));
     if (scene?.weeklyWeek && award) completeWeeklyRecall(scene.weeklyWeek, gained);
 
     // Guided run (daily practice or weekly recall): celebrate, then back to the map.
@@ -624,8 +621,7 @@ function SimulatePage() {
                 {character.flag} {character.name.toUpperCase()} · {personality.label.toUpperCase()}
               </p>
               <p className="mt-1 text-[10px] text-muted-foreground">
-                {bond.current.label} · {Math.round(bond.progress * 100)}% to{" "}
-                {bond.next?.label ?? "max"} — tap to change
+                {personality.label} — tap to change
               </p>
             </>
           ) : (
