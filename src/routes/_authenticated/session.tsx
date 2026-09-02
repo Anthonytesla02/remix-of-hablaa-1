@@ -297,7 +297,7 @@ function SessionPage() {
               <dd>{graded}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>COVER INTEGRITY</dt>
+              <dt>FOCUS HEARTS</dt>
               <dd>{cover}/5</dd>
             </div>
           </dl>

@@ -158,7 +158,7 @@ export function stepLabel(kind: Step["kind"]) {
     match: "Match Them Up",
     utter: "Say It Out Loud",
     roleplay: "Role Play",
-    dialogue: "Intercepted Dialogue",
+    dialogue: "Listen to the Chat",
     exit: "Exit Check",
   }[kind];
 }
