@@ -129,6 +129,14 @@ const ARC_LABELS: Record<string, string> = {
 
 export const onboarding = {
   ...data.onboarding_config,
+  daily_commitment_tiers: data.onboarding_config.daily_commitment_tiers.map((t) => ({
+    ...t,
+    label: TIER_LABELS[t.id] ?? t.label,
+  })),
+  goal_timelines: data.onboarding_config.goal_timelines.map((t) => ({
+    ...t,
+    label: TIMELINE_LABELS[t.id] ?? t.label,
+  })),
   operational_personas: data.onboarding_config.operational_personas.map((p) => ({
     ...p,
     label: GOAL_LABELS[p.id]?.label ?? p.label,
@@ -139,7 +147,59 @@ export const clearanceLevels = data.clearance_levels.map((c) => ({
   ...c,
   codename: LEVEL_NAMES[c.level] ?? c.codename,
 }));
-export const gamification = data.gamification;
+const TIER_LABELS: Record<string, string> = {
+  recon_10: "Quick",
+  field_op_30: "Steady",
+  full_deployment_60: "All In",
+};
+
+const TIMELINE_LABELS: Record<string, string> = {
+  sprint_30: "30-Day Sprint",
+  intensive_60: "60-Day Intensive",
+  standard_90: "90-Day Standard",
+  mastery_180: "180-Day Mastery",
+};
+
+const BADGE_LABELS: Record<string, { label: string; unlock_condition?: string }> = {
+  first_contact: { label: "First Hello" },
+  border_crosser: { label: "Off the Plane", unlock_condition: "Finish the First Hellos unit." },
+  iron_cover: { label: "Flawless Week", unlock_condition: "Finish a full week without a single slip." },
+  ghost_protocol: { label: "30-Day Streak", unlock_condition: "Keep a 30-day streak." },
+  deep_cover_operative: { label: "90-Day Streak", unlock_condition: "Keep a 90-day streak." },
+  directors_circle: { label: "180-Day Streak", unlock_condition: "Keep a 180-day streak." },
+  polyglot_handler: { label: "Polyglot", unlock_condition: "Active streaks in 2+ languages at once." },
+  fluent_interrogator: { label: "Smooth Talker", unlock_condition: "Pass a big test on the first try." },
+  quick_study: { label: "Quick Study", unlock_condition: "Finish a lesson in half the time at 90%+ accuracy." },
+  comeback_asset: { label: "Welcome Back", unlock_condition: "Come back and finish a lesson after a break." },
+  culture_briefed: { label: "Culture Buff", unlock_condition: "Read every culture note in a unit." },
+};
+
+const LEAGUE_NAMES = [
+  "Sprouts",
+  "Chatters",
+  "Explorers",
+  "Regulars",
+  "Naturals",
+  "Stars",
+  "Legends",
+];
+
+export const gamification = {
+  ...data.gamification,
+  currency: { ...data.gamification.currency, name: "Coins" },
+  streak: { ...data.gamification.streak, name: "Daily Streak" },
+  league_ranks: (data.gamification.league_ranks as { tier: number; name: string }[]).map((r, i) => ({
+    ...r,
+    name: LEAGUE_NAMES[i] ?? r.name,
+  })),
+  badges: (data.gamification.badges as { id: string; label: string; unlock_condition: string }[]).map(
+    (b) => ({
+      ...b,
+      label: BADGE_LABELS[b.id]?.label ?? b.label,
+      unlock_condition: BADGE_LABELS[b.id]?.unlock_condition ?? b.unlock_condition,
+    }),
+  ),
+};
 export const srsEngine = data.srs_engine;
 export const arcs = data.mission_arcs_overview.map((a) => ({
   ...a,
