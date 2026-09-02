@@ -18,9 +18,10 @@ export function useCompanion() {
   const langId = useApp((s) => s.profile?.langId ?? "spanish");
 
   return useMemo(() => {
-    const personality = personalityById(config?.personalityId);
     const character =
       characterById(config?.characterId) ?? charactersFor(langId)[0] ?? null;
+    // A character carries their own teaching style unless the learner overrode it.
+    const personality = personalityById(config?.personalityId ?? character?.personalityId);
 
     const memory = Object.values(mistakeMemory)
       .filter((m) => m.count >= 2)
