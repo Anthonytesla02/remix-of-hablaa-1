@@ -7,6 +7,11 @@
  * every cleared mission and simulation.
  */
 
+import sofiaImg from "@/assets/char-sofia.png";
+import luciaImg from "@/assets/char-lucia.png";
+import valentinaImg from "@/assets/char-valentina.png";
+import camilaImg from "@/assets/char-camila.png";
+
 export type PersonalityId =
   | "tutor"
   | "classmate"
@@ -121,6 +126,12 @@ export type NativeCharacter = {
   /** Dialect + expression guidance for the model. */
   dialect: string;
   locale: string;
+  /** Portrait shown as the in-app avatar. */
+  avatar: string;
+  /** Teaching style baked into this character. */
+  personalityId: PersonalityId;
+  /** One-line promise of how they teach. */
+  teaches: string;
 };
 
 export const CHARACTERS: NativeCharacter[] = [
@@ -135,6 +146,9 @@ export const CHARACTERS: NativeCharacter[] = [
     dialect:
       "Mexican Spanish. Uses ¿qué onda?, órale, güey, ahorita, chido, no manches. Never uses vosotros.",
     locale: "es-MX",
+    avatar: sofiaImg,
+    personalityId: "local",
+    teaches: "Teaches you street Spanish — how people actually talk in Mexico, plus the culture behind it.",
   },
   {
     id: "lucia",
@@ -147,6 +161,9 @@ export const CHARACTERS: NativeCharacter[] = [
     dialect:
       "Peninsular Spanish. Uses vosotros, vale, tío/tía, guay, qué fuerte, and the distinción c/z.",
     locale: "es-ES",
+    avatar: luciaImg,
+    personalityId: "professor",
+    teaches: "Teaches properly: clear grammar, correct register, every mistake named and explained.",
   },
   {
     id: "valentina",
@@ -159,6 +176,9 @@ export const CHARACTERS: NativeCharacter[] = [
     dialect:
       "Colombian paisa Spanish. Uses parce, ¿qué más?, chévere, bacano, a la orden, plenty of usted even with friends.",
     locale: "es-CO",
+    avatar: valentinaImg,
+    personalityId: "bestie",
+    teaches: "Teaches like a best friend: warm, encouraging, corrections that feel like tips.",
   },
   {
     id: "camila",
@@ -171,6 +191,9 @@ export const CHARACTERS: NativeCharacter[] = [
     dialect:
       "Rioplatense Spanish. Uses voseo (vos tenés, vos sabés), che, boludo, dale, re bueno, and the sh sound for ll/y.",
     locale: "es-AR",
+    avatar: camilaImg,
+    personalityId: "classmate",
+    teaches: "Teaches by chatting: casual, quick, playful teasing when you slip.",
   },
 ];
 
