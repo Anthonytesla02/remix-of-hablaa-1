@@ -81,9 +81,9 @@ function AuthPage() {
     <div className="topo flex min-h-[100dvh] flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <p className="hud text-[10px] text-secondary">OPERATION LINGUA</p>
+          <p className="hud text-[10px] text-secondary">Operation Lingua</p>
           <h1 className="hud mt-1 text-xl text-foreground">
-            {mode === "signin" ? "SECURE LOGIN" : "NEW RECRUIT"}
+            {mode === "signin" ? "Welcome back!" : "Let's get you started"}
           </h1>
           <p className="mt-2 text-xs text-muted-foreground">
             {mode === "signin"
@@ -107,7 +107,7 @@ function AuthPage() {
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
           )}
-          <span>CONTINUE WITH GOOGLE</span>
+          <span>Continue with Google</span>
         </button>
 
         <div className="my-4 flex items-center gap-3">
@@ -140,7 +140,7 @@ function AuthPage() {
             disabled={loading || googleLoading}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground disabled:opacity-40"
           >
-            {loading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : mode === "signin" ? "AUTHENTICATE" : "CREATE ACCOUNT"}
+            {loading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : mode === "signin" ? "Log in" : "Create account"}
           </button>
         </form>
 
@@ -151,7 +151,7 @@ function AuthPage() {
           }}
           className="hud mt-4 w-full text-center text-[10px] text-muted-foreground"
         >
-          {mode === "signin" ? "NEW RECRUIT? CREATE ACCOUNT" : "ALREADY ENLISTED? SIGN IN"}
+          {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
         </button>
       </div>
     </div>

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
   ),
 });
 
-const STEPS = ["CALLSIGN", "TARGET LANGUAGE", "COVER PERSONA", "DEPLOYMENT WINDOW", "DAILY COMMITMENT", "BRIEFING"];
+const STEPS = ["Your name", "Language", "Your vibe", "Start date", "Daily goal", "All set"];
 
 function IntakePage() {
   const navigate = useNavigate();
@@ -107,7 +107,7 @@ function IntakePage() {
         </div>
 
         <div className="mt-6">
-          <p className="hud text-[10px] text-secondary">OPERATION LINGUA</p>
+          <p className="hud text-[10px] text-secondary">Operation Lingua</p>
           <h1 className="hud mt-1 text-xl text-foreground">{STEPS[step]}</h1>
         </div>
 
@@ -238,7 +238,7 @@ function IntakePage() {
           disabled={!canAdvance}
           className="hud mt-6 w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground disabled:opacity-40"
         >
-          {step === STEPS.length - 1 ? "BEGIN DEPLOYMENT" : "CONTINUE"}
+          {step === STEPS.length - 1 ? "Let's go!" : "Continue"}
         </button>
       </div>
     </AppFrame>
