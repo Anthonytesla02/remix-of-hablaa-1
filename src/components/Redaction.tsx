@@ -35,7 +35,7 @@ export function Redaction({
         <>
           <span className="redaction-bar absolute inset-0 bg-redact" aria-hidden />
           <span className="stamp-in absolute right-1 top-0 hud text-[8px] text-destructive/70">
-            DECLASSIFIED
+            DELOCKED
           </span>
         </>
       )}

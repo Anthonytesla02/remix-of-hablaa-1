@@ -20,16 +20,16 @@ import { dueCards } from "@/lib/srs";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Case File Map — Operation Lingua" },
+      { title: "Your Learning Map — Habla" },
       {
         name: "description",
         content:
           "A winding checkpoint map of the 28-day Spanish Foundations course: run today's lesson, or tap a cleared checkpoint to drill its vocabulary in the vault.",
       },
-      { property: "og:title", content: "Case File Map — Operation Lingua" },
+      { property: "og:title", content: "Your Learning Map — Habla" },
       {
         property: "og:description",
-        content: "Mission arcs, daily challenges and spaced review on one progress map.",
+        content: "Lesson units, daily challenges and spaced review on one progress map.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -132,7 +132,7 @@ function DashboardPage() {
     ? activeLesson.objectives.slice(0, 2).join(" · ")
     : legacyActive
       ? legacyActive.day.learning_objectives.slice(0, 2).join(" · ")
-      : "Every authored day is cleared. Keep your vault serviced while the next unit is declassified.";
+      : "Every authored day is cleared. Keep your vault serviced while the next unit is unlocked.";
 
   return (
     <AppFrame>
@@ -150,7 +150,7 @@ function DashboardPage() {
         )}
         <p className="mt-2 text-sm">{blurb}</p>
         {activeLesson && (
-          <p className="mt-2 text-xs italic opacity-70">Mission: {activeLesson.mission}</p>
+          <p className="mt-2 text-xs italic opacity-70">Goal: {activeLesson.mission}</p>
         )}
         {activeLesson && (
           <p className="hud mt-2 text-[10px] text-destructive">
@@ -162,7 +162,7 @@ function DashboardPage() {
             {tier?.label.toUpperCase()} ·{" "}
             {activeLesson ? `${activeLesson.estimated_minutes} MIN` : `${tier?.minutes} MIN`}
           </span>
-          <span>{due} DUE IN VAULT</span>
+          <span>{due} DUE TO REVIEW</span>
         </div>
         {!allDone && activeNode && (
           <Link
@@ -206,8 +206,8 @@ function DashboardPage() {
           search={{ day: "due" }}
           className="hud mt-3 flex w-full items-center justify-between rounded-sm border border-primary/50 bg-primary/10 px-4 py-3 text-[10px] text-primary"
         >
-          <span>DEBRIEF VAULT · {due} ITEMS DUE</span>
-          <span>RUN RECALL →</span>
+          <span>PRACTICE DECK · {due} ITEMS DUE</span>
+          <span>REVIEW NOW →</span>
         </Link>
       )}
 
@@ -239,7 +239,7 @@ function DashboardPage() {
                   </p>
                   {done ? (
                     <p className="hud mt-2 flex items-center gap-1 text-[10px] text-primary">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> RECALL CLEARED
+                      <CheckCircle2 className="h-3.5 w-3.5" /> REVIEW DONE
                     </p>
                   ) : (
                     <Link
@@ -247,7 +247,7 @@ function DashboardPage() {
                       search={{ weekly: w.week }}
                       className="hud mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-secondary/60 py-2.5 text-[10px] text-secondary"
                     >
-                      <Radio className="h-3.5 w-3.5" /> RUN WEEKLY RECALL · +120 XP
+                      <Radio className="h-3.5 w-3.5" /> START WEEKLY REVIEW · +120 XP
                     </Link>
                   )}
                 </li>
@@ -284,7 +284,7 @@ function DashboardPage() {
                   to="/simulate"
                   className="hud mt-2 inline-flex items-center gap-1 text-[10px] text-primary"
                 >
-                  <Radio className="h-3 w-3" /> RUN IN SIMULATION DECK
+                  <Radio className="h-3 w-3" /> RUN IN CONVERSATION PRACTICE
                 </Link>
               </li>
             ))}

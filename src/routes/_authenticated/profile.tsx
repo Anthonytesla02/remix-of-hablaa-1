@@ -1,21 +1,35 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import {
+  ChevronRight,
+  Dumbbell,
+  LogOut,
+  Music,
+  ShoppingBag,
+  Trophy,
+  Volume2,
+} from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
-import { useApp, useClearance } from "@/lib/store";
+import { useApp, useLevel } from "@/lib/store";
 import { useCompanion } from "@/lib/use-companion";
-import { Link } from "@tanstack/react-router";
+import { setSfxMuted, sfxMuted, sfx } from "@/lib/sfx";
+import { useHandler } from "@/lib/handler-bus";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Operative Dossier — Operation Lingua" },
+      { title: "Your Profile — Habla" },
       {
         name: "description",
-        content: "Your clearance record, badges, streak history and training settings.",
+        content:
+          "Your level, badges, streak history and every setting for the app — tutor, voice speed, captions and sounds.",
       },
-      { property: "og:title", content: "Operative Dossier — Operation Lingua" },
-      { property: "og:description", content: "Clearance level, badges and session history." },
+      { property: "og:title", content: "Your Profile — Habla" },
+      { property: "og:description", content: "Level, badges, settings and session history." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => (
@@ -32,74 +46,88 @@ function ProfilePage() {
   const history = useApp((s) => s.history);
   const streak = useApp((s) => s.streak);
   const longest = useApp((s) => s.longestStreak);
+  const xp = useApp((s) => s.xp);
+  const credits = useApp((s) => s.credits);
   const settings = useApp((s) => s.settings);
   const setSetting = useApp((s) => s.setSetting);
   const resetAll = useApp((s) => s.resetAll);
-  const clearance = useClearance();
-  const { character, personality, memory, ready: hasCompanion } = useCompanion();
+  const level = useLevel();
+  const { character, personality, memory } = useCompanion();
+  const tutorMuted = useHandler((s) => s.muted);
+  const toggleTutorMute = useHandler((s) => s.toggleMute);
+  const [soundOff, setSoundOff] = useState(false);
 
+  useEffect(() => setSoundOff(sfxMuted()), []);
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
   }, [profile, navigate]);
   if (!profile) return null;
 
   const lang = langById(profile.langId);
-  const persona = onboarding.operational_personas.find((p) => p.id === profile.personaId);
+  const focus = onboarding.operational_personas.find((p) => p.id === profile.personaId);
   const allBadges = gamification.badges as { id: string; label: string; unlock_condition: string }[];
 
   return (
     <AppFrame>
       <section className="paper-card p-4">
-        <p className="hud text-[10px] text-destructive">OPERATIVE DOSSIER</p>
-        <h1 className="hud mt-1 text-lg">{profile.callsign.toUpperCase()}</h1>
-        <dl className="hud mt-3 space-y-1 text-[10px]">
-          <div className="flex justify-between">
-            <dt>LANGUAGE</dt>
-            <dd>
-              {lang?.flag_emoji} {lang?.label}
-            </dd>
+        <div className="flex items-center gap-3">
+          {character && (
+            <img
+              src={character.avatar}
+              alt={character.name}
+              width={512}
+              height={512}
+              className="h-16 w-16 rounded-full border-2 border-primary object-cover"
+            />
+          )}
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-extrabold">{profile.callsign}</h1>
+            <p className="text-[12px] font-bold text-secondary">
+              {lang?.flag_emoji} {lang?.label} · {level.current.codename}
+            </p>
+            <p className="text-[11px] text-muted-foreground">Learning for: {focus?.label}</p>
           </div>
-          <div className="flex justify-between">
-            <dt>PERSONA</dt>
-            <dd>{persona?.label}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt>CLEARANCE</dt>
-            <dd>
-              {clearance.current.ilr_equivalent} · {clearance.current.codename}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt>STREAK</dt>
-            <dd>
-              {streak} DAYS (BEST {longest})
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-3 text-xs">{clearance.current.can_do_summary}</p>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Stat label="XP" value={String(xp)} />
+          <Stat label="Streak" value={`${streak}d`} sub={`best ${longest}`} />
+          <Stat label="Coins" value={String(credits)} />
+        </div>
+        <p className="mt-3 text-xs">{level.current.can_do_summary}</p>
       </section>
 
-      <Link to="/companion" className="mt-4 block rounded-sm border border-border bg-card p-3">
-        <p className="hud text-[10px] text-muted-foreground">LANGUAGE PARTNER</p>
-        {hasCompanion && character ? (
-          <>
-            <p className="hud mt-1 text-[11px]">
-              {character.flag} {character.name.toUpperCase()} · {personality.emoji}{" "}
-              {personality.label.toUpperCase()}
-            </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">{character.bio}</p>
-          </>
-        ) : (
-          <p className="mt-1 text-[11px]">
-            No partner assigned yet. Pick who teaches you — tap to choose.
-          </p>
+      <Link
+        to="/companion"
+        onClick={() => sfx("tap")}
+        className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-border bg-card p-3"
+      >
+        {character && (
+          <img
+            src={character.avatar}
+            alt={character.name}
+            width={512}
+            height={512}
+            loading="lazy"
+            className="h-12 w-12 rounded-full border-2 border-border object-cover"
+          />
         )}
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] font-extrabold text-muted-foreground">Your tutor</span>
+          <span className="block text-sm font-extrabold">
+            {character ? `${character.flag} ${character.name}` : "Pick a tutor"} · {personality.emoji}{" "}
+            {personality.label}
+          </span>
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+            {character?.teaches ?? "Choose who teaches you and how."}
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
 
       {memory.length > 0 && (
-        <section className="mt-4 rounded-sm border border-destructive/40 bg-destructive/5 p-3">
-          <p className="hud text-[10px] text-destructive">
-            WHAT {character ? character.name.toUpperCase() : "YOUR PARTNER"} REMEMBERS
+        <section className="mt-4 rounded-2xl border-2 border-primary/30 bg-primary/5 p-3">
+          <p className="text-[11px] font-extrabold text-primary">
+            What {character ? character.name : "your tutor"} remembers
           </p>
           <ul className="mt-2 space-y-1.5">
             {memory.map((m) => (
@@ -109,14 +137,67 @@ function ProfilePage() {
             ))}
           </ul>
           <p className="mt-2 text-[10px] text-muted-foreground">
-            These get worked back into your simulations until you stop missing them.
+            These keep coming back in your practice until they stick.
           </p>
         </section>
       )}
 
       <section className="mt-6">
-        <p className="hud text-[10px] text-muted-foreground">
-          COMMENDATIONS · {badges.length}/{allBadges.length}
+        <p className="text-[11px] font-extrabold text-muted-foreground">Shortcuts</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <Shortcut to="/vault" icon={Dumbbell} label="Practice" />
+          <Shortcut to="/league" icon={Trophy} label="League" />
+          <Shortcut to="/shop" icon={ShoppingBag} label="Shop" />
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <p className="text-[11px] font-extrabold text-muted-foreground">Settings</p>
+        <div className="mt-2 space-y-4 rounded-2xl border-2 border-border bg-card p-3">
+          <label className="block">
+            <span className="text-[12px] font-extrabold">
+              Voice speed · {settings.rate.toFixed(2)}×
+            </span>
+            <input
+              type="range"
+              min={0.6}
+              max={1.3}
+              step={0.05}
+              value={settings.rate}
+              onChange={(e) => setSetting("rate", Number(e.target.value))}
+              className="mt-2 w-full accent-[oklch(0.72_0.17_35)]"
+            />
+          </label>
+          <Row
+            label="Show captions"
+            note="See what's being said in the language you're learning."
+            on={settings.captions}
+            set={(v) => setSetting("captions", v)}
+          />
+          <Row
+            label="Interface sounds"
+            icon={Music}
+            note="Clicks, pops and celebration sounds."
+            on={!soundOff}
+            set={(v) => {
+              setSfxMuted(!v);
+              setSoundOff(!v);
+              if (v) sfx("tap");
+            }}
+          />
+          <Row
+            label="Tutor voice"
+            icon={Volume2}
+            note="Let your tutor read things out loud."
+            on={!tutorMuted}
+            set={() => toggleTutorMute()}
+          />
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <p className="text-[11px] font-extrabold text-muted-foreground">
+          Badges · {badges.length}/{allBadges.length}
         </p>
         <ul className="mt-2 grid grid-cols-2 gap-2">
           {allBadges.map((b) => {
@@ -124,11 +205,11 @@ function ProfilePage() {
             return (
               <li
                 key={b.id}
-                className={`rounded-sm border px-3 py-2.5 ${
+                className={`rounded-2xl border-2 px-3 py-2.5 ${
                   earned ? "border-primary/60 bg-primary/10" : "border-border bg-card opacity-50"
                 }`}
               >
-                <span className="hud block text-[9px]">{b.label}</span>
+                <span className="block text-[12px] font-extrabold">{b.label}</span>
                 <span className="mt-1 block text-[10px] text-muted-foreground">
                   {b.unlock_condition}
                 </span>
@@ -139,64 +220,118 @@ function ProfilePage() {
       </section>
 
       <section className="mt-6">
-        <p className="hud text-[10px] text-muted-foreground">SETTINGS</p>
-        <div className="mt-2 space-y-3 rounded-sm border border-border bg-card p-3">
-          <label className="block">
-            <span className="hud text-[10px]">TTS SPEED · {settings.rate.toFixed(2)}×</span>
-            <input
-              type="range"
-              min={0.6}
-              max={1.3}
-              step={0.05}
-              value={settings.rate}
-              onChange={(e) => setSetting("rate", Number(e.target.value))}
-              className="mt-2 w-full accent-[oklch(0.762_0.128_72)]"
-            />
-          </label>
-          <label className="flex items-center justify-between">
-            <span className="hud text-[10px]">TARGET-LANGUAGE CAPTIONS</span>
-            <input
-              type="checkbox"
-              checked={settings.captions}
-              onChange={(e) => setSetting("captions", e.target.checked)}
-              className="h-5 w-5 accent-[oklch(0.673_0.076_213)]"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="mt-6">
-        <p className="hud text-[10px] text-muted-foreground">SESSION LOG</p>
+        <p className="text-[11px] font-extrabold text-muted-foreground">Recent sessions</p>
         <ul className="mt-2 space-y-1.5">
           {history.map((h, i) => (
             <li
               key={i}
-              className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-sm border border-border bg-card px-3 py-2"
+              className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-2xl border-2 border-border bg-card px-3 py-2"
             >
-              <span className="hud truncate text-[10px]">
+              <span className="truncate text-[11px] font-bold">
                 {new Date(h.date).toLocaleDateString()} · {Math.round(h.accuracy * 100)}% ·{" "}
-                {h.items} ITEMS
+                {h.items} items
               </span>
-              <span className="hud shrink-0 text-[10px] text-primary">+{h.xp} XP</span>
+              <span className="shrink-0 text-[11px] font-extrabold text-primary">+{h.xp} XP</span>
             </li>
           ))}
           {history.length === 0 && (
-            <li className="text-xs text-muted-foreground">No sessions logged yet.</li>
+            <li className="text-xs text-muted-foreground">No sessions yet — go say hello!</li>
           )}
         </ul>
       </section>
 
       <button
+        onClick={async () => {
+          sfx("tap");
+          await supabase.auth.signOut();
+          void navigate({ to: "/auth" });
+        }}
+        className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border py-3 text-[12px] font-extrabold text-muted-foreground"
+      >
+        <LogOut className="h-4 w-4" /> Sign out
+      </button>
+
+      <button
         onClick={() => {
-          if (confirm("Burn this dossier? All local progress is erased.")) {
+          if (confirm("Start over? All progress on this device is erased.")) {
             resetAll();
             void navigate({ to: "/" });
           }
         }}
-        className="hud mt-8 w-full rounded-sm border border-destructive/60 py-3 text-[10px] text-destructive"
+        className="mt-3 w-full rounded-2xl border-2 border-destructive/50 py-3 text-[12px] font-extrabold text-destructive"
       >
-        BURN DOSSIER (RESET)
+        Reset my progress
       </button>
     </AppFrame>
+  );
+}
+
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-2xl bg-background/60 py-2">
+      <p className="text-base font-extrabold">{value}</p>
+      <p className="text-[10px] font-bold text-muted-foreground">{sub ? `${label} · ${sub}` : label}</p>
+    </div>
+  );
+}
+
+function Shortcut({
+  to,
+  icon: Icon,
+  label,
+}: {
+  to: "/vault" | "/league" | "/shop";
+  icon: typeof Dumbbell;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      onClick={() => sfx("tap")}
+      className="flex flex-col items-center gap-1 rounded-2xl border-2 border-border bg-card py-3 text-[11px] font-extrabold"
+    >
+      <Icon className="h-5 w-5 text-secondary" />
+      {label}
+    </Link>
+  );
+}
+
+function Row({
+  label,
+  note,
+  on,
+  set,
+  icon: Icon,
+}: {
+  label: string;
+  note: string;
+  on: boolean;
+  set: (v: boolean) => void;
+  icon?: typeof Music;
+}) {
+  return (
+    <button
+      onClick={() => set(!on)}
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left"
+    >
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 text-[12px] font-extrabold">
+          {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+          {label}
+        </span>
+        <span className="mt-0.5 block text-[11px] text-muted-foreground">{note}</span>
+      </span>
+      <span
+        className={`h-6 w-11 shrink-0 rounded-full border-2 transition-colors ${
+          on ? "border-primary bg-primary/30" : "border-border bg-muted"
+        }`}
+      >
+        <span
+          className={`mt-[2px] block h-4 w-4 rounded-full transition-transform ${
+            on ? "translate-x-5 bg-primary" : "translate-x-1 bg-muted-foreground"
+          }`}
+        />
+      </span>
+    </button>
   );
 }

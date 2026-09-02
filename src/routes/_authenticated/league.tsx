@@ -6,12 +6,12 @@ import { useApp } from "@/lib/store";
 export const Route = createFileRoute("/_authenticated/league")({
   head: () => ({
     meta: [
-      { title: "Weekly League — Operation Lingua" },
+      { title: "Weekly League — Habla" },
       {
         name: "description",
         content: "Weekly cell standings against AI-paced ghost operatives, ranked by XP earned.",
       },
-      { property: "og:title", content: "Weekly League — Operation Lingua" },
+      { property: "og:title", content: "Weekly League — Habla" },
       { property: "og:description", content: "Track your weekly XP standings in your operative cell." },
     ],
   }),

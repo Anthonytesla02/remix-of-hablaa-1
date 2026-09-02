@@ -53,13 +53,13 @@ export const Route = createFileRoute("/_authenticated/simulate")({
 
   head: () => ({
     meta: [
-      { title: "Simulation Deck — Operation Lingua" },
+      { title: "Conversation Practice — Habla" },
       {
         name: "description",
         content:
           "Live role-play simulations with ambient soundscapes: cafés, stations, airports and parties. Speak, listen and hold a real conversation in your target language.",
       },
-      { property: "og:title", content: "Simulation Deck — Operation Lingua" },
+      { property: "og:title", content: "Conversation Practice — Habla" },
       {
         property: "og:description",
         content: "Immersive AI role-play with matching background noise for each setting.",
@@ -240,7 +240,7 @@ function dailyScene(lessonId: string): Scene | null {
     id: "cafe",
     label: `Field practice — ${l.title}`,
     character: "friendly local you have just met in the street",
-    setting: `an everyday street-corner conversation used to practise today's lesson "${l.title}" (${l.focus}). Mission: ${l.mission}`,
+    setting: `an everyday street-corner conversation used to practise today's lesson "${l.title}" (${l.focus}). Goal: ${l.mission}`,
     goals: [
       ...l.objectives.slice(0, 3),
       `keep steering the conversation so the learner reuses today's vocabulary: ${words}`,
@@ -602,7 +602,7 @@ function SimulatePage() {
   if (!scene) {
     return (
       <AppFrame>
-        <h1 className="hud text-xl">SIMULATION DECK</h1>
+        <h1 className="hud text-xl">CONVERSATION PRACTICE</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Pick a location. Ambient sound comes up, a local starts talking, and you hold the
           conversation — speak or type, and ask your own questions too.
@@ -838,7 +838,7 @@ function SimulatePage() {
             </div>
           ) : draft ? (
             <div className="space-y-2 rounded-sm border border-secondary/50 bg-secondary/5 p-3">
-              <p className="hud text-[9px] text-secondary">CHECK YOUR TRANSMISSION</p>
+              <p className="hud text-[9px] text-secondary">CHECK YOUR TRANSLESSON</p>
               <textarea
                 value={draft.text}
                 onChange={(e) => setDraft({ ...draft, text: e.target.value })}
@@ -866,7 +866,7 @@ function SimulatePage() {
             </div>
           ) : drafting ? (
             <div className="space-y-2 rounded-sm border border-secondary/50 bg-secondary/5 p-6 text-center">
-              <p className="hud text-[10px] text-secondary">DECODING TRANSMISSION…</p>
+              <p className="hud text-[10px] text-secondary">DECODING TRANSLESSON…</p>
               <p className="text-[11px] text-muted-foreground">Translating what you said.</p>
             </div>
           ) : (
@@ -901,7 +901,7 @@ function SimulatePage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm sm:items-center">
           <div className="w-full max-w-md rounded-sm border border-destructive/60 bg-card p-4 shadow-lg">
             <p className="hud flex items-center gap-1.5 text-[10px] text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" /> TRANSMISSION ERROR
+              <AlertTriangle className="h-3.5 w-3.5" /> TRANSLESSON ERROR
             </p>
             <p className="mt-2 text-[11px] text-muted-foreground">You said</p>
             <p className="text-sm">{correction.pending}</p>
@@ -944,7 +944,7 @@ function SimulatePage() {
       )}
       {reward > 0 && (
         <Completion
-          title="FIELD PRACTICE COMPLETE"
+          title="PRACTICE COMPLETE"
           subtitle={`+${reward} XP`}
           tone="levelup"
           duration={2200}

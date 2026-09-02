@@ -396,7 +396,7 @@ export const useApp = create<State>()(
   ),
 );
 
-export function useClearance() {
+export function useLevel() {
   const xp = useApp((s) => s.xp);
   return clearanceForXp(xp);
 }

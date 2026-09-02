@@ -16,7 +16,7 @@ export type Tier = {
   approx_new_items_per_session: string;
 };
 export type Persona = { id: string; label: string; description: string; priority_arcs: string[] };
-export type ClearanceLevel = {
+export type LevelLevel = {
   level: number;
   codename: string;
   ilr_equivalent: string;
@@ -89,7 +89,7 @@ const data = raw as unknown as {
     daily_commitment_tiers: Tier[];
     operational_personas: Persona[];
   };
-  clearance_levels: ClearanceLevel[];
+  clearance_levels: LevelLevel[];
   gamification: any;
   srs_engine: any;
   mission_arcs_overview: { id: string; order: number; title: string; theme: string }[];
@@ -97,11 +97,115 @@ const data = raw as unknown as {
   phrase_bank: Record<string, { target?: string; translation?: string }[]>;
 };
 
-export const onboarding = data.onboarding_config;
-export const clearanceLevels = data.clearance_levels;
-export const gamification = data.gamification;
+/** Friendly, non-spy display names layered over the raw content data. */
+const LEVEL_NAMES: Record<number, string> = {
+  0: "Just Starting",
+  0.5: "First Words",
+  1: "Getting Chatty",
+  1.5: "Everyday Talk",
+  2: "Confident",
+  2.5: "Really Fluent",
+  3: "Fluent Speaker",
+};
+
+const GOAL_LABELS: Record<string, { label: string; description: string }> = {
+  undercover_traveler: { label: "Travel & Explore", description: "Trips, transport, hotels, food and money." },
+  corporate_diplomat: { label: "Work & Business", description: "Meetings, polite register, professional small talk." },
+  intelligence_operative: { label: "Confident in a Pinch", description: "Emergencies, awkward moments, thinking on your feet." },
+  local_resident: { label: "Living Abroad", description: "Paperwork, housing, utilities, doctors." },
+  humanitarian_field_worker: { label: "Helping & Care Work", description: "Medical, coordination, practical vocabulary." },
+};
+
+const ARC_LABELS: Record<string, string> = {
+  arc_1_arrival_and_survival: "First Hellos",
+  arc_2_movement_and_navigation: "Getting Around",
+  arc_3_sustenance_and_commerce: "Food & Shopping",
+  arc_4_contact_and_communication: "Meeting People",
+  arc_5_lodging_and_logistics: "Where You Stay",
+  arc_6_crisis_and_emergency: "When Things Go Wrong",
+  arc_7_work_and_negotiation: "Work Talk",
+  arc_8_deep_cover: "Real Conversation",
+};
+
+const TIER_LABELS: Record<string, string> = {
+  recon_10: "Quick",
+  field_op_30: "Steady",
+  full_deployment_60: "All In",
+};
+
+const TIMELINE_LABELS: Record<string, string> = {
+  sprint_30: "30-Day Sprint",
+  intensive_60: "60-Day Intensive",
+  standard_90: "90-Day Standard",
+  mastery_180: "180-Day Mastery",
+};
+
+export const onboarding = {
+  ...data.onboarding_config,
+  daily_commitment_tiers: data.onboarding_config.daily_commitment_tiers.map((t) => ({
+    ...t,
+    label: TIER_LABELS[t.id] ?? t.label,
+  })),
+  goal_timelines: data.onboarding_config.goal_timelines.map((t) => ({
+    ...t,
+    label: TIMELINE_LABELS[t.id] ?? t.label,
+  })),
+  operational_personas: data.onboarding_config.operational_personas.map((p) => ({
+    ...p,
+    label: GOAL_LABELS[p.id]?.label ?? p.label,
+    description: GOAL_LABELS[p.id]?.description ?? p.description,
+  })),
+};
+export const clearanceLevels = data.clearance_levels.map((c) => ({
+  ...c,
+  codename: LEVEL_NAMES[c.level] ?? c.codename,
+}));
+
+const BADGE_LABELS: Record<string, { label: string; unlock_condition?: string }> = {
+  first_contact: { label: "First Hello" },
+  border_crosser: { label: "Off the Plane", unlock_condition: "Finish the First Hellos unit." },
+  iron_cover: { label: "Flawless Week", unlock_condition: "Finish a full week without a single slip." },
+  ghost_protocol: { label: "30-Day Streak", unlock_condition: "Keep a 30-day streak." },
+  deep_cover_operative: { label: "90-Day Streak", unlock_condition: "Keep a 90-day streak." },
+  directors_circle: { label: "180-Day Streak", unlock_condition: "Keep a 180-day streak." },
+  polyglot_handler: { label: "Polyglot", unlock_condition: "Active streaks in 2+ languages at once." },
+  fluent_interrogator: { label: "Smooth Talker", unlock_condition: "Pass a big test on the first try." },
+  quick_study: { label: "Quick Study", unlock_condition: "Finish a lesson in half the time at 90%+ accuracy." },
+  comeback_asset: { label: "Welcome Back", unlock_condition: "Come back and finish a lesson after a break." },
+  culture_briefed: { label: "Culture Buff", unlock_condition: "Read every culture note in a unit." },
+};
+
+const LEAGUE_NAMES = [
+  "Sprouts",
+  "Chatters",
+  "Explorers",
+  "Regulars",
+  "Naturals",
+  "Stars",
+  "Legends",
+];
+
+export const gamification = {
+  ...data.gamification,
+  currency: { ...data.gamification.currency, name: "Coins" },
+  streak: { ...data.gamification.streak, name: "Daily Streak" },
+  league_ranks: (data.gamification.league_ranks as { tier: number; name: string }[]).map((r, i) => ({
+    ...r,
+    name: LEAGUE_NAMES[i] ?? r.name,
+  })),
+  badges: (data.gamification.badges as { id: string; label: string; unlock_condition: string }[]).map(
+    (b) => ({
+      ...b,
+      label: BADGE_LABELS[b.id]?.label ?? b.label,
+      unlock_condition: BADGE_LABELS[b.id]?.unlock_condition ?? b.unlock_condition,
+    }),
+  ),
+};
 export const srsEngine = data.srs_engine;
-export const arcs = data.mission_arcs_overview;
+export const arcs = data.mission_arcs_overview.map((a) => ({
+  ...a,
+  title: ARC_LABELS[a.id] ?? a.title,
+}));
 export const curriculum = data.curriculum;
 export const phraseBank = data.phrase_bank;
 
@@ -148,7 +252,7 @@ export function arcTitle(arcId: string) {
 }
 
 /** Adjusted-hours → clearance estimate (spec 5.3). */
-export function projectedClearance(langId: string, timelineId: string, tierId: string) {
+export function projectedLevel(langId: string, timelineId: string, tierId: string) {
   const lang = langById(langId);
   const tl = onboarding.goal_timelines.find((t) => t.id === timelineId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === tierId);

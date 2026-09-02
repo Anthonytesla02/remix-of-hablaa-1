@@ -56,7 +56,7 @@ const LINES: Record<string, string[]> = {
   ],
   recallDone: [
     "Vault serviced. Those intervals just stretched out nicely.",
-    "Debrief filed. Your future self says thanks.",
+    "Recap filed. Your future self says thanks.",
   ],
   simStart: [
     "Earpiece is in. I'll be listening — just talk, mistakes and all.",

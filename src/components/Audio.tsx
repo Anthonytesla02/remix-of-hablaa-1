@@ -15,7 +15,7 @@ export function PlayButton({
   text,
   locale,
   rate,
-  label = "PLAY TRANSMISSION",
+  label = "PLAY TRANSLESSON",
   autoPlay = false,
 }: {
   text: string;

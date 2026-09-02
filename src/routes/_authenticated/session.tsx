@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/session")({
 
   head: () => ({
     meta: [
-      { title: "Mission Session — Operation Lingua" },
+      { title: "Lesson — Habla" },
       {
         name: "description",
         content: "Run drills, shadowing, dictation and spoken field interrogations in your target language.",
       },
-      { property: "og:title", content: "Mission Session — Operation Lingua" },
+      { property: "og:title", content: "Lesson — Habla" },
       { property: "og:description", content: "Zero-English drills, shadowing and spoken roleplay." },
     ],
   }),
@@ -152,7 +152,7 @@ function SessionPage() {
         if (!passed) {
           resetRun();
         } else if (lesson) {
-          // Straight into today's field practice — apply what was just learned.
+          // Straight into today's practice chat — apply what was just learned.
           void navigate({ to: "/simulate", search: { daily: lesson.id } });
         } else if (next) {
           void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
@@ -280,54 +280,54 @@ function SessionPage() {
       <div className="topo mx-auto flex min-h-[100dvh] w-full max-w-md flex-col justify-center px-5">
         <div className="paper-card p-5">
           <p className="stamp stamp-in inline-block text-destructive">
-            {passed ? "DEBRIEF COMPLETE" : "RE-RUN REQUIRED"}
+            {passed ? "LESSON COMPLETE" : "LET'S TRY AGAIN"}
           </p>
-          <h1 className="hud mt-4 text-lg">SESSION REPORT</h1>
+          <h1 className="hud mt-4 text-lg">Your results</h1>
           <dl className="hud mt-4 space-y-2 text-[11px]">
             <div className="flex justify-between">
-              <dt>XP EARNED</dt>
+              <dt>XP earned</dt>
               <dd>{xp}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>ACCURACY</dt>
+              <dt>Accuracy</dt>
               <dd>{Math.round(accuracy * 100)}%</dd>
             </div>
             <div className="flex justify-between">
-              <dt>ITEMS GRADED</dt>
+              <dt>Questions</dt>
               <dd>{graded}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>COVER INTEGRITY</dt>
+              <dt>Hearts left</dt>
               <dd>{cover}/5</dd>
             </div>
           </dl>
           {threshold > 0 && (
             <p className="hud mt-3 text-[10px] text-muted-foreground">
-              MASTERY THRESHOLD · {Math.round(threshold * 100)}%
+              Pass mark · {Math.round(threshold * 100)}%
             </p>
           )}
           <p className="mt-4 text-sm">
             {passed
-              ? "Clean work. Missed items are filed in your Debrief Vault and will resurface on schedule."
-              : `Below the ${Math.round(threshold * 100)}% mastery threshold, so we run it again right now — no penalty, and your XP is already banked.`}
+              ? "Nice work! Anything you missed goes into your practice deck and comes back later."
+              : `Below the ${Math.round(threshold * 100)}% pass mark, so let\u2019s run it again right now — no penalty, and your XP is already banked.`}
           </p>
           {handoff && (
             <p className="hud mt-4 flex items-center gap-2 text-[10px] text-secondary">
               <span className="h-1.5 w-1.5 animate-ping rounded-full bg-secondary" />
               {passed
                 ? lesson
-                  ? "OPENING FIELD PRACTICE…"
-                  : "LOADING NEXT FILE…"
-                : "RE-RUNNING THIS FILE…"}
+                  ? "OPENING PRACTICE CHAT…"
+                  : "LOADING THE NEXT LESSON…"
+                : "STARTING IT AGAIN…"}
             </p>
           )}
         </div>
         <Link to="/dashboard" className="hud mt-4 rounded-sm border border-border py-3.5 text-center text-xs text-muted-foreground">
-          RETURN TO MAP
+          BACK TO MAP
         </Link>
         {celebrate && (
           <Completion
-            title={passed ? "OBJECTIVE COMPLETE" : "FILE STILL OPEN"}
+            title={passed ? "Lesson complete!" : "Almost there!"}
             subtitle={`+${xp} XP`}
             tone={passed ? "levelup" : "complete"}
             duration={1800}
@@ -342,10 +342,10 @@ function SessionPage() {
     return (
       <div className="topo mx-auto flex min-h-[100dvh] w-full max-w-md flex-col items-center justify-center gap-4 px-5">
         <p className="hud text-center text-xs text-muted-foreground">
-          NOTHING DUE. YOUR VAULT IS CLEAR.
+          Nothing to review right now — you\u2019re all caught up!
         </p>
         <Link to="/dashboard" className="hud rounded-sm border border-border px-5 py-3 text-[10px]">
-          RETURN TO MAP
+          BACK TO MAP
         </Link>
       </div>
     );
@@ -354,7 +354,7 @@ function SessionPage() {
   return (
     <div className="topo mx-auto flex min-h-[100dvh] w-full max-w-md flex-col">
       <header className="sticky top-0 z-10 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 bg-background/95 px-4 py-3 backdrop-blur">
-        <button onClick={() => navigate({ to: "/dashboard" })} aria-label="Abort session">
+        <button onClick={() => navigate({ to: "/dashboard" })} aria-label="Leave lesson">
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
         <div className="min-w-0">

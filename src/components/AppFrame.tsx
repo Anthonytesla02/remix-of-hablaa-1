@@ -1,24 +1,24 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useHydrated } from "@tanstack/react-router";
-import { Flame, Map, Archive, Radio, Trophy, Package, IdCard } from "lucide-react";
+import { Flame, Map, MessageCircle, Dumbbell, Trophy, ShoppingBag, User } from "lucide-react";
 import type { ReactNode } from "react";
 import { HandlerAvatar } from "@/components/Handler";
-import { useApp, useClearance } from "@/lib/store";
+import { useApp, useLevel } from "@/lib/store";
 
 const TABS = [
-  { to: "/dashboard", label: "Map", icon: Map },
-  { to: "/simulate", label: "Sim", icon: Radio },
-  { to: "/vault", label: "Vault", icon: Archive },
+  { to: "/dashboard", label: "Learn", icon: Map },
+  { to: "/simulate", label: "Talk", icon: MessageCircle },
+  { to: "/vault", label: "Practice", icon: Dumbbell },
   { to: "/league", label: "League", icon: Trophy },
-  { to: "/shop", label: "Supply", icon: Package },
-  { to: "/profile", label: "Dossier", icon: IdCard },
+  { to: "/shop", label: "Shop", icon: ShoppingBag },
+  { to: "/profile", label: "Profile", icon: User },
 ] as const;
 
 export function HudBar() {
   const xp = useApp((s) => s.xp);
   const credits = useApp((s) => s.credits);
   const streak = useApp((s) => s.streak);
-  const clearance = useClearance();
+  const clearance = useLevel();
 
   return (
     <header className="sticky top-0 z-20 border-b-2 border-border/70 bg-background/90 backdrop-blur-md">

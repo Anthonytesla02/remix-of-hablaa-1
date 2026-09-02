@@ -224,7 +224,7 @@ export function McqStep({ data, locale, onDone }: Props & { data: Mcq }) {
   );
 }
 
-/* ── Mode E — Rapid Deployment Recall (pattern substitution) ─────────── */
+/* ── Mode E — Rapid Start Recall (pattern substitution) ─────────── */
 export function PatternStep({
   data,
   sub,
@@ -288,7 +288,7 @@ export function PatternStep({
   );
 }
 
-/* ── Debrief Vault review (SM-2) ─────────────────────────────────────── */
+/* ── Practice Deck review (SM-2) ─────────────────────────────────────── */
 export function ReviewStep({ data, locale, onDone }: Props & { data: SrsCard }) {
   const [revealed, setRevealed] = useState(false);
   return (

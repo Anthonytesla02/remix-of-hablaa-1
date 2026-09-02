@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { X, VolumeX, Volume2, Music, Music2 } from "lucide-react";
-import avatar from "@/assets/handler-avatar.png";
+import fallbackAvatar from "@/assets/handler-avatar.png";
+import { useCompanion } from "@/lib/use-companion";
 import { useHandler, type Mood } from "@/lib/handler-bus";
 import { getSpeakingState, subscribeSpeaking } from "@/lib/speech";
 import { setSfxMuted, sfxMuted } from "@/lib/sfx";
@@ -52,6 +53,9 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
   const [open, setOpen] = useState(false);
   const [soundOff, setSoundOff] = useState(false);
   const { speaking, text: spokenText } = useSpeaking();
+  const { character, ready } = useCompanion();
+  const avatar = ready && character ? character.avatar : fallbackAvatar;
+  const tutorName = ready && character ? character.name : "Your tutor";
 
   useEffect(() => setSoundOff(sfxMuted()), []);
 
@@ -85,11 +89,11 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
           key={msg.id}
           className="handler-pop pointer-events-auto relative rounded-sm border border-border bg-card/95 px-3 py-2.5 pr-8 shadow-lg backdrop-blur"
         >
-          <p className="hud text-[8px] text-muted-foreground">HANDLER</p>
+          <p className="hud text-[8px] text-muted-foreground">{tutorName.toUpperCase()}</p>
           <p className={`mt-1 text-[12px] leading-snug ${MOOD_TEXT[mood]}`}>{msg.text}</p>
           <button
             onClick={dismiss}
-            aria-label="Dismiss handler"
+            aria-label="Dismiss message"
             className="absolute right-1.5 top-1.5 text-muted-foreground"
           >
             <X className="h-3.5 w-3.5" />
@@ -111,7 +115,7 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
         </button>
         <button
           onClick={toggleMute}
-          aria-label={muted ? "Unmute handler" : "Mute handler"}
+          aria-label={muted ? "Unmute tutor" : "Mute tutor"}
           className="rounded-full border border-border bg-card/90 p-1.5 text-muted-foreground backdrop-blur"
         >
           {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -122,20 +126,20 @@ export function HandlerAvatar({ offset = true }: { offset?: boolean }) {
               ? dismiss()
               : useHandler
                   .getState()
-                  .push("Standing by. Tap a checkpoint and I'll call the shots.", "idle")
+                  .push("I'm here whenever you're ready — tap a lesson and let's talk.", "idle")
           }
-          aria-label="Handler"
+          aria-label={tutorName}
           className={`grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 bg-card/90 backdrop-blur ${
             speaking ? "handler-ring border-primary" : MOOD_RING[mood]
           }`}
         >
           <img
             src={avatar}
-            alt="Your handler"
+            alt={tutorName}
             width={512}
             height={512}
             loading="lazy"
-            className={`h-11 w-11 object-contain ${speaking ? "handler-talk" : "handler-idle"}`}
+            className={`h-11 w-11 rounded-full object-cover ${speaking ? "handler-talk" : "handler-idle"}`}
           />
         </button>
       </div>
