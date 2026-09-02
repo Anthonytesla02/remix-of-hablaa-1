@@ -32,7 +32,7 @@ const TIER_MIX: Record<
 > = {
   recon_10: { mcq: 4, pattern: 2, review: 8, shadow: 1, sts: 1, dictation: 0 },
   field_op_30: { mcq: 6, pattern: 4, review: 20, shadow: 2, sts: 2, dictation: 1 },
-  full_deployment_60: { mcq: 99, pattern: 99, review: 40, shadow: 3, sts: 99, dictation: 99 },
+  full_start date_60: { mcq: 99, pattern: 99, review: 40, shadow: 3, sts: 99, dictation: 99 },
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -146,8 +146,8 @@ export function buildLessonSession(opts: {
 export function stepLabel(kind: Step["kind"]) {
   return {
     mcq: "Tactical Pattern Drill",
-    pattern: "Rapid Deployment Recall",
-    review: "Debrief Vault Review",
+    pattern: "Rapid Start Recall",
+    review: "Practice Deck Review",
     shadow: "Echo Protocol",
     sts: "Field Interrogation",
     dictation: "Blackout Dictation",

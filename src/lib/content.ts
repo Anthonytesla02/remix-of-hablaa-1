@@ -16,7 +16,7 @@ export type Tier = {
   approx_new_items_per_session: string;
 };
 export type Persona = { id: string; label: string; description: string; priority_arcs: string[] };
-export type ClearanceLevel = {
+export type LevelLevel = {
   level: number;
   codename: string;
   ilr_equivalent: string;
@@ -89,7 +89,7 @@ const data = raw as unknown as {
     daily_commitment_tiers: Tier[];
     operational_personas: Persona[];
   };
-  clearance_levels: ClearanceLevel[];
+  clearance_levels: LevelLevel[];
   gamification: any;
   srs_engine: any;
   mission_arcs_overview: { id: string; order: number; title: string; theme: string }[];
@@ -191,7 +191,7 @@ export function arcTitle(arcId: string) {
 }
 
 /** Adjusted-hours → clearance estimate (spec 5.3). */
-export function projectedClearance(langId: string, timelineId: string, tierId: string) {
+export function projectedLevel(langId: string, timelineId: string, tierId: string) {
   const lang = langById(langId);
   const tl = onboarding.goal_timelines.find((t) => t.id === timelineId);
   const tier = onboarding.daily_commitment_tiers.find((t) => t.id === tierId);

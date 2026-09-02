@@ -9,7 +9,7 @@ const cache = new Map<string, WordGloss>();
 
 /**
  * Renders target-language text where every word carries a dotted underline.
- * Tapping a word opens a dossier sheet with its translation + grammar note.
+ * Tapping a word opens a profile sheet with its translation + grammar note.
  */
 export function Glossed({
   text,

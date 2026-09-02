@@ -389,7 +389,7 @@ export function TeachStep({ lesson, locale, onDone }: Props & { lesson: CourseLe
       </div>
 
       <div>
-        <p className="hud text-[10px] text-muted-foreground">MISSION OBJECTIVES</p>
+        <p className="hud text-[10px] text-muted-foreground">LESSON OBJECTIVES</p>
         <ul className="mt-2 space-y-1 text-xs">
           {lesson.objectives.map((o) => (
             <li key={o} className="flex gap-2">
@@ -970,7 +970,7 @@ export function DialogueStep({ lesson, locale, onDone }: Props & { lesson: Cours
   );
 }
 
-/* ── Live Contact (roleplay → Simulation Deck) ───────────────────────── */
+/* ── Live Contact (roleplay → Conversation Practice) ───────────────────────── */
 export function RoleplayStep({
   act,
   lesson,
@@ -998,7 +998,7 @@ export function RoleplayStep({
         to="/simulate"
         className="hud flex w-full items-center justify-center gap-2 rounded-sm border border-secondary/60 bg-secondary/10 py-3.5 text-[11px] text-secondary"
       >
-        <Radio className="h-4 w-4" /> OPEN SIMULATION DECK
+        <Radio className="h-4 w-4" /> OPEN CONVERSATION PRACTICE
       </Link>
 
       <Feedback act={act} ok />

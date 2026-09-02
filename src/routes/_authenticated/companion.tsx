@@ -10,7 +10,7 @@ import { useApp } from "@/lib/store";
 export const Route = createFileRoute("/_authenticated/companion")({
   head: () => ({
     meta: [
-      { title: "Choose Your Language Partner — Operation Lingua" },
+      { title: "Choose Your Language Partner — Habla" },
       {
         name: "description",
         content:

@@ -17,13 +17,13 @@ export const Route = createFileRoute("/_authenticated/vault")({
   }),
   head: () => ({
     meta: [
-      { title: "Debrief Vault — Active Recall Drills" },
+      { title: "Practice Deck — Active Recall Drills" },
       {
         name: "description",
         content:
           "Quiz-style active recall: one item at a time, recall it from memory, self-grade and bank XP. Scheduled by a modified SM-2 engine.",
       },
-      { property: "og:title", content: "Debrief Vault — Active Recall Drills" },
+      { property: "og:title", content: "Practice Deck — Active Recall Drills" },
       {
         property: "og:description",
         content: "One-card-at-a-time recall drills with XP, combos and spaced-repetition scheduling.",
@@ -110,7 +110,7 @@ function VaultPage() {
     if (mine.length > 0) {
       out.push({
         id: "all",
-        label: "FULL VAULT",
+        label: "FULL DECK",
         sub: "Every item you've ever filed, shuffled",
         cards: [...mine].sort(() => Math.random() - 0.5),
         due: mine.filter((c) => c.dueAt <= now).length,
@@ -146,7 +146,7 @@ function VaultPage() {
 
   return (
     <AppFrame>
-      <h1 className="hud text-lg">DEBRIEF VAULT</h1>
+      <h1 className="hud text-lg">PRACTICE DECK</h1>
       <p className="mt-1 text-xs text-muted-foreground">
         {total} items filed · {dueTotal} due now · active recall, one item at a time
       </p>

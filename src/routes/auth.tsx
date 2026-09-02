@@ -7,13 +7,13 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Secure Login — Operation Lingua" },
+      { title: "Sign in — Habla" },
       {
         name: "description",
         content: "Sign in or create an account to sync your language training progress across devices.",
       },
-      { property: "og:title", content: "Secure Login — Operation Lingua" },
-      { property: "og:description", content: "Sync your operative dossier across all your devices." },
+      { property: "og:title", content: "Sign in — Habla" },
+      { property: "og:description", content: "Sync your operative profile across all your devices." },
     ],
   }),
   component: AuthPage,
@@ -81,13 +81,13 @@ function AuthPage() {
     <div className="topo flex min-h-[100dvh] flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <p className="hud text-[10px] text-secondary">Operation Lingua</p>
+          <p className="hud text-[10px] text-secondary">Habla</p>
           <h1 className="hud mt-1 text-xl text-foreground">
             {mode === "signin" ? "Welcome back!" : "Let's get you started"}
           </h1>
           <p className="mt-2 text-xs text-muted-foreground">
             {mode === "signin"
-              ? "Authenticate to access your operative dossier."
+              ? "Authenticate to access your operative profile."
               : "Create an account to sync progress across all your devices."}
           </p>
         </div>

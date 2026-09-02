@@ -59,7 +59,7 @@ function AuthGate() {
     return (
       <div className="topo flex min-h-[100dvh] items-center justify-center">
         <p className="hud animate-pulse text-xs text-muted-foreground">
-          ESTABLISHING SECURE LINK…
+          ESTABLISHING CONNECTION…
         </p>
       </div>
     );

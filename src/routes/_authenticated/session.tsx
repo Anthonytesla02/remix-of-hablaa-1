@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/session")({
 
   head: () => ({
     meta: [
-      { title: "Mission Session — Operation Lingua" },
+      { title: "Lesson — Habla" },
       {
         name: "description",
         content: "Run drills, shadowing, dictation and spoken field interrogations in your target language.",
       },
-      { property: "og:title", content: "Mission Session — Operation Lingua" },
+      { property: "og:title", content: "Lesson — Habla" },
       { property: "og:description", content: "Zero-English drills, shadowing and spoken roleplay." },
     ],
   }),
@@ -152,7 +152,7 @@ function SessionPage() {
         if (!passed) {
           resetRun();
         } else if (lesson) {
-          // Straight into today's field practice — apply what was just learned.
+          // Straight into today's practice chat — apply what was just learned.
           void navigate({ to: "/simulate", search: { daily: lesson.id } });
         } else if (next) {
           void navigate({ to: "/session", search: { day: courseKey(next.id), mode: "mission" } });
@@ -280,7 +280,7 @@ function SessionPage() {
       <div className="topo mx-auto flex min-h-[100dvh] w-full max-w-md flex-col justify-center px-5">
         <div className="paper-card p-5">
           <p className="stamp stamp-in inline-block text-destructive">
-            {passed ? "DEBRIEF COMPLETE" : "RE-RUN REQUIRED"}
+            {passed ? "LESSON COMPLETE" : "LET'S TRY AGAIN"}
           </p>
           <h1 className="hud mt-4 text-lg">SESSION REPORT</h1>
           <dl className="hud mt-4 space-y-2 text-[11px]">
@@ -308,7 +308,7 @@ function SessionPage() {
           )}
           <p className="mt-4 text-sm">
             {passed
-              ? "Clean work. Missed items are filed in your Debrief Vault and will resurface on schedule."
+              ? "Clean work. Missed items are filed in your Practice Deck and will resurface on schedule."
               : `Below the ${Math.round(threshold * 100)}% mastery threshold, so we run it again right now — no penalty, and your XP is already banked.`}
           </p>
           {handoff && (
@@ -316,7 +316,7 @@ function SessionPage() {
               <span className="h-1.5 w-1.5 animate-ping rounded-full bg-secondary" />
               {passed
                 ? lesson
-                  ? "OPENING FIELD PRACTICE…"
+                  ? "OPENING PRACTICE CHAT…"
                   : "LOADING NEXT FILE…"
                 : "RE-RUNNING THIS FILE…"}
             </p>

@@ -3,7 +3,7 @@ import { useHydrated } from "@tanstack/react-router";
 import { Flame, Map, MessageCircle, Dumbbell, Trophy, ShoppingBag, User } from "lucide-react";
 import type { ReactNode } from "react";
 import { HandlerAvatar } from "@/components/Handler";
-import { useApp, useClearance } from "@/lib/store";
+import { useApp, useLevel } from "@/lib/store";
 
 const TABS = [
   { to: "/dashboard", label: "Learn", icon: Map },
@@ -18,7 +18,7 @@ export function HudBar() {
   const xp = useApp((s) => s.xp);
   const credits = useApp((s) => s.credits);
   const streak = useApp((s) => s.streak);
-  const clearance = useClearance();
+  const clearance = useLevel();
 
   return (
     <header className="sticky top-0 z-20 border-b-2 border-border/70 bg-background/90 backdrop-blur-md">

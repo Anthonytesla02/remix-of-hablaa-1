@@ -6,7 +6,7 @@ import {
   authoredLanguages,
   languages,
   onboarding,
-  projectedClearance,
+  projectedLevel,
 } from "@/lib/content";
 import { charactersFor } from "@/lib/companions";
 import { useApp } from "@/lib/store";
@@ -78,7 +78,7 @@ function IntakePage() {
 
   const roster = charactersFor(langId);
   const tutor = roster.find((c) => c.id === tutorId) ?? roster[0]!;
-  const projection = projectedClearance(langId, timelineId, tierId);
+  const projection = projectedLevel(langId, timelineId, tierId);
 
   async function next() {
     sfx("click");

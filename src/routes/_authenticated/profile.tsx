@@ -2,20 +2,20 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
-import { useApp, useClearance } from "@/lib/store";
+import { useApp, useLevel } from "@/lib/store";
 import { useCompanion } from "@/lib/use-companion";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Operative Dossier — Operation Lingua" },
+      { title: "Your Profile — Habla" },
       {
         name: "description",
         content: "Your clearance record, badges, streak history and training settings.",
       },
-      { property: "og:title", content: "Operative Dossier — Operation Lingua" },
-      { property: "og:description", content: "Clearance level, badges and session history." },
+      { property: "og:title", content: "Your Profile — Habla" },
+      { property: "og:description", content: "Level, badges and session history." },
     ],
   }),
   component: () => (
@@ -35,7 +35,7 @@ function ProfilePage() {
   const settings = useApp((s) => s.settings);
   const setSetting = useApp((s) => s.setSetting);
   const resetAll = useApp((s) => s.resetAll);
-  const clearance = useClearance();
+  const clearance = useLevel();
   const { character, personality, memory, ready: hasCompanion } = useCompanion();
 
   useEffect(() => {
@@ -50,7 +50,7 @@ function ProfilePage() {
   return (
     <AppFrame>
       <section className="paper-card p-4">
-        <p className="hud text-[10px] text-destructive">OPERATIVE DOSSIER</p>
+        <p className="hud text-[10px] text-destructive">YOUR PROFILE</p>
         <h1 className="hud mt-1 text-lg">{profile.callsign.toUpperCase()}</h1>
         <dl className="hud mt-3 space-y-1 text-[10px]">
           <div className="flex justify-between">
@@ -64,7 +64,7 @@ function ProfilePage() {
             <dd>{persona?.label}</dd>
           </div>
           <div className="flex justify-between">
-            <dt>CLEARANCE</dt>
+            <dt>LEVEL</dt>
             <dd>
               {clearance.current.ilr_equivalent} · {clearance.current.codename}
             </dd>
@@ -188,14 +188,14 @@ function ProfilePage() {
 
       <button
         onClick={() => {
-          if (confirm("Burn this dossier? All local progress is erased.")) {
+          if (confirm("Burn this profile? All local progress is erased.")) {
             resetAll();
             void navigate({ to: "/" });
           }
         }}
         className="hud mt-8 w-full rounded-sm border border-destructive/60 py-3 text-[10px] text-destructive"
       >
-        BURN DOSSIER (RESET)
+        BURN PROFILE (RESET)
       </button>
     </AppFrame>
   );
