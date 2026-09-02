@@ -127,6 +127,19 @@ const ARC_LABELS: Record<string, string> = {
   arc_8_deep_cover: "Real Conversation",
 };
 
+const TIER_LABELS: Record<string, string> = {
+  recon_10: "Quick",
+  field_op_30: "Steady",
+  full_deployment_60: "All In",
+};
+
+const TIMELINE_LABELS: Record<string, string> = {
+  sprint_30: "30-Day Sprint",
+  intensive_60: "60-Day Intensive",
+  standard_90: "90-Day Standard",
+  mastery_180: "180-Day Mastery",
+};
+
 export const onboarding = {
   ...data.onboarding_config,
   daily_commitment_tiers: data.onboarding_config.daily_commitment_tiers.map((t) => ({
@@ -147,18 +160,6 @@ export const clearanceLevels = data.clearance_levels.map((c) => ({
   ...c,
   codename: LEVEL_NAMES[c.level] ?? c.codename,
 }));
-const TIER_LABELS: Record<string, string> = {
-  recon_10: "Quick",
-  field_op_30: "Steady",
-  full_deployment_60: "All In",
-};
-
-const TIMELINE_LABELS: Record<string, string> = {
-  sprint_30: "30-Day Sprint",
-  intensive_60: "60-Day Intensive",
-  standard_90: "90-Day Standard",
-  mastery_180: "180-Day Mastery",
-};
 
 const BADGE_LABELS: Record<string, { label: string; unlock_condition?: string }> = {
   first_contact: { label: "First Hello" },
