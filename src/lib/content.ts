@@ -97,11 +97,54 @@ const data = raw as unknown as {
   phrase_bank: Record<string, { target?: string; translation?: string }[]>;
 };
 
-export const onboarding = data.onboarding_config;
-export const clearanceLevels = data.clearance_levels;
+/** Friendly, non-spy display names layered over the raw content data. */
+const LEVEL_NAMES: Record<number, string> = {
+  0: "Just Starting",
+  0.5: "First Words",
+  1: "Getting Chatty",
+  1.5: "Everyday Talk",
+  2: "Confident",
+  2.5: "Really Fluent",
+  3: "Fluent Speaker",
+};
+
+const GOAL_LABELS: Record<string, { label: string; description: string }> = {
+  undercover_traveler: { label: "Travel & Explore", description: "Trips, transport, hotels, food and money." },
+  corporate_diplomat: { label: "Work & Business", description: "Meetings, polite register, professional small talk." },
+  intelligence_operative: { label: "Confident in a Pinch", description: "Emergencies, awkward moments, thinking on your feet." },
+  local_resident: { label: "Living Abroad", description: "Paperwork, housing, utilities, doctors." },
+  humanitarian_field_worker: { label: "Helping & Care Work", description: "Medical, coordination, practical vocabulary." },
+};
+
+const ARC_LABELS: Record<string, string> = {
+  arc_1_arrival_and_survival: "First Hellos",
+  arc_2_movement_and_navigation: "Getting Around",
+  arc_3_sustenance_and_commerce: "Food & Shopping",
+  arc_4_contact_and_communication: "Meeting People",
+  arc_5_lodging_and_logistics: "Where You Stay",
+  arc_6_crisis_and_emergency: "When Things Go Wrong",
+  arc_7_work_and_negotiation: "Work Talk",
+  arc_8_deep_cover: "Real Conversation",
+};
+
+export const onboarding = {
+  ...data.onboarding_config,
+  operational_personas: data.onboarding_config.operational_personas.map((p) => ({
+    ...p,
+    label: GOAL_LABELS[p.id]?.label ?? p.label,
+    description: GOAL_LABELS[p.id]?.description ?? p.description,
+  })),
+};
+export const clearanceLevels = data.clearance_levels.map((c) => ({
+  ...c,
+  codename: LEVEL_NAMES[c.level] ?? c.codename,
+}));
 export const gamification = data.gamification;
 export const srsEngine = data.srs_engine;
-export const arcs = data.mission_arcs_overview;
+export const arcs = data.mission_arcs_overview.map((a) => ({
+  ...a,
+  title: ARC_LABELS[a.id] ?? a.title,
+}));
 export const curriculum = data.curriculum;
 export const phraseBank = data.phrase_bank;
 
