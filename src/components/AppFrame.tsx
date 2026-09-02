@@ -94,7 +94,7 @@ export function Hydrated({ children }: { children: ReactNode }) {
   if (!hydrated)
     return (
       <div className="topo flex min-h-[100dvh] items-center justify-center">
-        <p className="hud animate-pulse text-xs text-muted-foreground">ESTABLISHING SECURE LINK…</p>
+        <p className="bounce-soft text-sm font-extrabold text-muted-foreground">Warming up your session…</p>
       </div>
     );
   return <>{children}</>;
