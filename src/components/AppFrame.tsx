@@ -21,26 +21,26 @@ export function HudBar() {
   const clearance = useClearance();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b-2 border-border/70 bg-background/90 backdrop-blur-md">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5">
         <div className="min-w-0">
-          <p className="hud truncate text-[10px] text-muted-foreground">
-            CLEARANCE {clearance.current.ilr_equivalent} · {clearance.current.codename}
+          <p className="truncate text-[11px] font-bold text-muted-foreground">
+            {clearance.current.codename} · Level {clearance.current.ilr_equivalent}
           </p>
-          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-secondary transition-all"
-              style={{ width: `${Math.round(clearance.progress * 100)}%` }}
+              className="h-full rounded-full bg-secondary transition-all duration-500"
+              style={{ width: `${Math.max(4, Math.round(clearance.progress * 100))}%` }}
             />
           </div>
         </div>
-        <div className="hud flex shrink-0 items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1 text-primary">
+        <div className="flex shrink-0 items-center gap-2 text-[12px] font-extrabold">
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-primary">
             <Flame className="h-3.5 w-3.5" />
             {streak}
           </span>
-          <span className="text-primary">{xp} XP</span>
-          <span className="text-secondary">{credits} IC</span>
+          <span className="rounded-full bg-amber/20 px-2 py-1 text-foreground">{xp} XP</span>
+          <span className="rounded-full bg-secondary/20 px-2 py-1 text-foreground">{credits}</span>
         </div>
       </div>
     </header>
@@ -50,8 +50,8 @@ export function HudBar() {
 export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="grid grid-cols-6">
+    <nav className="sticky bottom-0 z-20 border-t-2 border-border/70 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+      <ul className="grid grid-cols-6 px-1 py-1">
         {TABS.map((t) => {
           const active = pathname === t.to;
           const Icon = t.icon;
@@ -59,12 +59,15 @@ export function TabBar() {
             <li key={t.to}>
               <Link
                 to={t.to}
-                className={`flex flex-col items-center gap-1 py-2.5 ${
-                  active ? "text-primary" : "text-muted-foreground"
+                className={`flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors ${
+                  active ? "bg-primary/12 text-primary" : "text-muted-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span className="hud text-[9px]">{t.label}</span>
+                <Icon
+                  className={`h-5 w-5 ${active ? "scale-110 transition-transform" : ""}`}
+                  strokeWidth={active ? 2.6 : 2}
+                />
+                <span className="text-[9px] font-extrabold">{t.label}</span>
               </Link>
             </li>
           );
