@@ -1,7 +1,8 @@
 /**
  * Procedural UI sound effects (Web Audio). No assets, no network — every sound
  * is synthesised so clicks, transitions, loading loops and completions stay
- * instant and tiny. Respects a persisted mute flag.
+ * instant and tiny. Tuned to be soft, round and friendly (marimba/bell-ish)
+ * rather than harsh beeps. Respects a persisted mute flag.
  */
 
 export type SfxName =
@@ -19,6 +20,7 @@ const MUTE_KEY = "ol.sfx.muted";
 
 let ctx: AudioContext | null = null;
 let bus: GainNode | null = null;
+let verb: ConvolverNode | null = null;
 let muted = false;
 let loadingStop: (() => void) | null = null;
 
@@ -39,8 +41,21 @@ function audio(): AudioContext | null {
     if (!Ctor) return null;
     ctx = new Ctor();
     bus = ctx.createGain();
-    bus.gain.value = 0.5;
+    bus.gain.value = 0.55;
     bus.connect(ctx.destination);
+
+    // Tiny room so notes bloom instead of clicking off.
+    const len = Math.floor(ctx.sampleRate * 0.7);
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3.2;
+    }
+    verb = ctx.createConvolver();
+    verb.buffer = buf;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.18;
+    verb.connect(wet).connect(bus);
   }
   if (ctx.state === "suspended") void ctx.resume().catch(() => {});
   return ctx;
@@ -67,32 +82,63 @@ type ToneOpts = {
   type?: OscillatorType;
   gain?: number;
   delay?: number;
+  /** Adds a soft octave-up shimmer, marimba style. */
+  shimmer?: boolean;
 };
 
-function tone({ freq, to, dur = 0.12, type = "sine", gain = 0.2, delay = 0 }: ToneOpts) {
+/** Soft, rounded note: sine core, gentle attack, exponential tail, light room. */
+function note({
+  freq,
+  to,
+  dur = 0.24,
+  type = "sine",
+  gain = 0.18,
+  delay = 0,
+  shimmer = true,
+}: ToneOpts) {
   const c = audio();
   if (!c || !bus) return;
   const t = c.currentTime + delay;
+
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.setValueAtTime(Math.max(900, freq * 5), t);
+
   const osc = c.createOscillator();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, t);
   if (to) osc.frequency.exponentialRampToValueAtTime(Math.max(1, to), t + dur);
-  const g = c.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(gain, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  osc.connect(g).connect(bus);
+  osc.connect(lp).connect(g);
+
+  if (shimmer) {
+    const o2 = c.createOscillator();
+    o2.type = "triangle";
+    o2.frequency.setValueAtTime(freq * 2, t);
+    const g2 = c.createGain();
+    g2.gain.value = 0.22;
+    o2.connect(g2).connect(lp);
+    o2.start(t);
+    o2.stop(t + dur + 0.02);
+  }
+
+  g.connect(bus);
+  if (verb) g.connect(verb);
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }
 
-function noise(dur = 0.16, gain = 0.12, freq = 1800) {
+function noise(dur = 0.16, gain = 0.08, freq = 1800) {
   const c = audio();
   if (!c || !bus) return;
   const frames = Math.floor(c.sampleRate * dur);
   const buf = c.createBuffer(1, frames, c.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < frames; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+  for (let i = 0; i < frames; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / frames) ** 2;
   const src = c.createBufferSource();
   src.buffer = buf;
   const filter = c.createBiquadFilter();
@@ -108,39 +154,49 @@ function noise(dur = 0.16, gain = 0.12, freq = 1800) {
 export function sfx(name: SfxName) {
   if (muted || typeof window === "undefined") return;
   switch (name) {
+    // Soft rounded "bloop" — pleasant even when tapped fast.
     case "click":
-      tone({ freq: 880, to: 620, dur: 0.06, type: "square", gain: 0.06 });
+      note({ freq: 587.33, dur: 0.11, gain: 0.1, shimmer: false });
       break;
     case "tap":
-      tone({ freq: 460, to: 380, dur: 0.05, type: "triangle", gain: 0.07 });
+      note({ freq: 783.99, dur: 0.1, gain: 0.09, shimmer: false });
       break;
     case "transition":
-      tone({ freq: 320, to: 760, dur: 0.22, type: "sine", gain: 0.09 });
-      noise(0.18, 0.05, 2600);
+      note({ freq: 523.25, dur: 0.18, gain: 0.09, shimmer: false });
+      note({ freq: 783.99, dur: 0.24, gain: 0.08, delay: 0.07 });
       break;
+    // Happy rising third.
     case "correct":
-      tone({ freq: 660, dur: 0.1, type: "sine", gain: 0.14 });
-      tone({ freq: 880, dur: 0.16, type: "sine", gain: 0.13, delay: 0.09 });
+      note({ freq: 659.25, dur: 0.16, gain: 0.14 });
+      note({ freq: 987.77, dur: 0.28, gain: 0.12, delay: 0.08 });
       break;
+    // Gentle "aww", never harsh.
     case "wrong":
-      tone({ freq: 220, to: 130, dur: 0.28, type: "sawtooth", gain: 0.1 });
+      note({ freq: 329.63, dur: 0.18, gain: 0.11, type: "triangle", shimmer: false });
+      note({ freq: 261.63, dur: 0.3, gain: 0.1, type: "triangle", delay: 0.1, shimmer: false });
       break;
+    // Bright major arpeggio + sparkle.
     case "complete":
       [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
-        tone({ freq: f, dur: 0.4, type: "triangle", gain: 0.13, delay: i * 0.1 }),
+        note({ freq: f, dur: 0.5, gain: 0.14, delay: i * 0.085 }),
       );
-      noise(0.5, 0.05, 3200);
+      note({ freq: 1567.98, dur: 0.7, gain: 0.07, delay: 0.36 });
+      noise(0.4, 0.03, 5200);
       break;
     case "levelup":
-      [392, 523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) =>
-        tone({ freq: f, dur: 0.5, type: "sine", gain: 0.12, delay: i * 0.08 }),
+      [392, 523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) =>
+        note({ freq: f, dur: 0.55, gain: 0.13, delay: i * 0.075 }),
       );
+      note({ freq: 2093, dur: 0.9, gain: 0.06, delay: 0.5 });
+      noise(0.5, 0.03, 6000);
       break;
     case "record":
-      tone({ freq: 520, to: 900, dur: 0.12, type: "sine", gain: 0.1 });
+      note({ freq: 523.25, dur: 0.12, gain: 0.11, shimmer: false });
+      note({ freq: 880, dur: 0.16, gain: 0.1, delay: 0.08, shimmer: false });
       break;
     case "stop":
-      tone({ freq: 900, to: 500, dur: 0.12, type: "sine", gain: 0.1 });
+      note({ freq: 880, dur: 0.12, gain: 0.1, shimmer: false });
+      note({ freq: 523.25, dur: 0.18, gain: 0.09, delay: 0.08, shimmer: false });
       break;
   }
 }
@@ -149,7 +205,11 @@ export function sfx(name: SfxName) {
 export function startLoading(): () => void {
   stopLoading();
   if (muted || typeof window === "undefined") return () => {};
-  const iv = setInterval(() => tone({ freq: 700, dur: 0.05, type: "sine", gain: 0.035 }), 620);
+  let up = true;
+  const iv = setInterval(() => {
+    note({ freq: up ? 659.25 : 587.33, dur: 0.16, gain: 0.045, shimmer: false });
+    up = !up;
+  }, 640);
   loadingStop = () => clearInterval(iv);
   return stopLoading;
 }
@@ -175,6 +235,13 @@ export function initSfx() {
       );
       if (!el) return;
       sfx(el.tagName === "A" ? "tap" : "click");
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(8);
+        } catch {
+          /* noop */
+        }
+      }
     },
     { capture: true },
   );

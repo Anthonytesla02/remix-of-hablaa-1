@@ -1,13 +1,20 @@
 import { useEffect, useMemo } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { PartyPopper, Star } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
+const CONFETTI_COLORS = [
+  "var(--primary)",
+  "var(--secondary)",
+  "var(--amber)",
+  "var(--destructive)",
+];
+
 /**
- * Full-screen completion celebration. Plays a sound, stamps a seal, throws
- * sparks, then calls `onDone` so the app can move straight into the next task.
+ * Full-screen celebration: confetti rain, a bouncy badge and a happy chime,
+ * then `onDone` fires so the app keeps the momentum going.
  */
 export function Completion({
-  title = "OBJECTIVE COMPLETE",
+  title = "Nice work!",
   subtitle,
   tone = "complete",
   duration = 1800,
@@ -19,16 +26,17 @@ export function Completion({
   duration?: number;
   onDone?: () => void;
 }) {
-  const sparks = useMemo(
+  const confetti = useMemo(
     () =>
-      Array.from({ length: 14 }, (_, i) => {
-        const a = (i / 14) * Math.PI * 2;
-        return {
-          dx: `${Math.cos(a) * 120}px`,
-          dy: `${Math.sin(a) * 120}px`,
-          delay: `${(i % 5) * 40}ms`,
-        };
-      }),
+      Array.from({ length: 34 }, (_, i) => ({
+        left: `${(i * 97) % 100}%`,
+        dx: `${((i % 7) - 3) * 18}px`,
+        spin: `${((i % 5) + 2) * 220}deg`,
+        dur: `${1.2 + ((i % 6) * 0.18)}s`,
+        delay: `${(i % 9) * 45}ms`,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length]!,
+        round: i % 3 === 0,
+      })),
     [],
   );
 
@@ -41,30 +49,41 @@ export function Completion({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-background/85 backdrop-blur-sm">
-      <div className="relative grid place-items-center">
-        <span className="burst-ring absolute h-28 w-28 rounded-full border-2 border-primary" />
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-background/80 backdrop-blur-sm">
+      {confetti.map((c, i) => (
         <span
-          className="burst-ring absolute h-28 w-28 rounded-full border border-secondary"
-          style={{ animationDelay: "140ms" }}
+          key={i}
+          className={`confetti-fall absolute top-0 h-3 w-2 ${c.round ? "rounded-full" : "rounded-[2px]"}`}
+          style={
+            {
+              left: c.left,
+              backgroundColor: c.color,
+              animationDelay: c.delay,
+              "--dx": c.dx,
+              "--spin": c.spin,
+              "--dur": c.dur,
+            } as React.CSSProperties
+          }
         />
-        {sparks.map((s, i) => (
-          <span
-            key={i}
-            className="spark-fly absolute h-1.5 w-1.5 rounded-full bg-primary"
-            style={
-              {
-                "--dx": s.dx,
-                "--dy": s.dy,
-                animationDelay: s.delay,
-              } as React.CSSProperties
-            }
-          />
-        ))}
-        <div className="seal-in relative grid place-items-center gap-2 rounded-sm border-2 border-primary bg-card/95 px-6 py-5 text-center shadow-xl">
-          <CheckCircle2 className="h-8 w-8 text-primary" />
-          <p className="hud text-xs text-primary">{title}</p>
-          {subtitle && <p className="hud text-[10px] text-muted-foreground">{subtitle}</p>}
+      ))}
+
+      <div className="relative grid place-items-center">
+        <span className="burst-ring absolute h-28 w-28 rounded-full border-4 border-primary/60" />
+        <span
+          className="burst-ring absolute h-28 w-28 rounded-full border-4 border-secondary/60"
+          style={{ animationDelay: "150ms" }}
+        />
+
+        <div className="seal-in relative grid place-items-center gap-2 rounded-3xl border-2 border-border bg-card px-7 py-6 text-center shadow-[0_10px_0_-2px_var(--border),0_24px_40px_-24px_rgba(0,0,0,.4)]">
+          <div className="wiggle grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground">
+            {tone === "levelup" ? (
+              <Star className="h-7 w-7 fill-current" />
+            ) : (
+              <PartyPopper className="h-7 w-7" />
+            )}
+          </div>
+          <p className="text-lg font-extrabold">{title}</p>
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
     </div>

@@ -8,7 +8,6 @@ const CompanionBrief = z.object({
   dialect: z.string().max(300).default(""),
   slang: z.number().int().min(0).max(3).default(1),
   roast: z.number().int().min(0).max(3).default(1),
-  bond: z.string().max(40).default("Stranger"),
   localMode: z.boolean().default(true),
   noTranslate: z.boolean().default(false),
   memory: z.array(z.string().max(200)).max(6).default([]),

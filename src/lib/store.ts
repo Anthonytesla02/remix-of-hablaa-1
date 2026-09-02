@@ -58,8 +58,6 @@ type State = {
 
   /** Who your language partner is. Null until they pick one. */
   companion: CompanionConfig | null;
-  /** Relationship progress with the chosen character. */
-  bondPoints: number;
   /** What the AI remembers you keep getting wrong. */
   mistakeMemory: Record<string, MistakeNote>;
 
@@ -83,7 +81,6 @@ type State = {
   checkIn: () => CheckInResult | null;
   completeWeeklyRecall: (week: number, xp: number) => void;
   setCompanion: (c: Partial<CompanionConfig>) => void;
-  addBond: (n: number) => void;
   noteMistake: (tag: string, detail: string) => void;
 };
 
@@ -167,7 +164,6 @@ const initial = {
   lastCheckIn: null,
   weeklyRecallDone: [] as number[],
   companion: null as CompanionConfig | null,
-  bondPoints: 0,
   mistakeMemory: {} as Record<string, MistakeNote>,
 
 };
@@ -313,8 +309,6 @@ export const useApp = create<State>()(
           },
         })),
 
-      addBond: (n) => set((s) => ({ bondPoints: Math.max(0, s.bondPoints + n) })),
-
       noteMistake: (tag, detail) =>
         set((s) => {
           const key = tag.toLowerCase().slice(0, 40);
@@ -385,7 +379,6 @@ export const useApp = create<State>()(
           badges.add("border_crosser");
 
         set({
-          bondPoints: s.bondPoints + 20,
           xp: s.xp + totalXp,
           weeklyXp: s.weeklyXp + totalXp,
           credits: credits + creditsEarned,

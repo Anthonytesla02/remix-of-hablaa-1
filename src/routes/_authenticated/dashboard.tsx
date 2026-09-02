@@ -127,7 +127,7 @@ function DashboardPage() {
   // Duolingo-style winding path: horizontal offsets cycle left → centre → right.
   const OFFSETS = [0, 46, 66, 46, 0, -46, -66, -46];
 
-  const headline = activeLesson?.title ?? legacyActive?.day.theme ?? "COURSE COMPLETE";
+  const headline = activeLesson?.title ?? legacyActive?.day.theme ?? "Course complete";
   const blurb = activeLesson
     ? activeLesson.objectives.slice(0, 2).join(" · ")
     : legacyActive
@@ -138,7 +138,7 @@ function DashboardPage() {
     <AppFrame>
       <section className="paper-card p-4">
         <p className="hud text-[10px] text-destructive">
-          {allDone ? "ALL FILES CLEARED" : "TODAY'S ORDERS"}
+          {allDone ? "All done for now" : "Today's lesson"}
         </p>
         <h1 className="hud mt-1 text-lg leading-tight">
           {lang?.flag_emoji} {headline}
@@ -154,7 +154,7 @@ function DashboardPage() {
         )}
         {activeLesson && (
           <p className="hud mt-2 text-[10px] text-destructive">
-            {isCheckpoint ? "WEEKLY CHECKPOINT · " : ""}UNLOCKS NEXT FILE AT {Math.round(gate * 100)}% ACCURACY
+            {isCheckpoint ? "Weekly checkpoint · " : ""}Unlocks the next lesson at {Math.round(gate * 100)}% accuracy
           </p>
         )}
         <div className="hud mt-3 flex items-center gap-3 text-[10px] opacity-70">
@@ -170,7 +170,7 @@ function DashboardPage() {
             search={{ day: activeNode.key, mode: "mission" }}
             className="hud mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-background py-3 text-xs text-primary"
           >
-            <Target className="h-4 w-4" /> {courseOn ? "START TODAY'S LESSON" : "START MISSION"}
+            <Target className="h-4 w-4" /> {courseOn ? "Start today's lesson" : "Start lesson"}
           </Link>
         )}
       </section>
@@ -220,7 +220,7 @@ function DashboardPage() {
 
       {recallWeeks.length > 0 && (
         <section className="mt-6">
-          <p className="hud text-[10px] text-muted-foreground">WEEKLY RECALL OPERATIONS</p>
+          <p className="hud text-[10px] text-muted-foreground">Weekly recall</p>
           <ul className="mt-2 space-y-2">
             {recallWeeks.map((w) => {
               const done = weeklyRecallDone.includes(w.week);
@@ -258,7 +258,7 @@ function DashboardPage() {
       )}
 
       <section className="mt-6">
-        <p className="hud text-[10px] text-muted-foreground">DAILY QUESTS</p>
+        <p className="hud text-[10px] text-muted-foreground">Daily quests</p>
         <ul className="mt-2 space-y-2">
           {quests.list.map((q) => (
             <li
@@ -274,7 +274,7 @@ function DashboardPage() {
 
       {specials.length > 0 && (
         <section className="mt-6">
-          <p className="hud text-[10px] text-muted-foreground">SPECIAL CHALLENGES UNLOCKED</p>
+          <p className="hud text-[10px] text-muted-foreground">Special challenges</p>
           <ul className="mt-2 space-y-2">
             {specials.slice(-3).map((c) => (
               <li key={c.id} className="rounded-sm border border-border bg-card px-3 py-2.5">
@@ -294,7 +294,7 @@ function DashboardPage() {
 
       <section className="mt-7">
         <p className="hud text-[10px] text-muted-foreground">
-          {courseOn ? "SPANISH FOUNDATIONS — 28 DAY MAP" : "CASE FILE MAP"}
+          {courseOn ? "Spanish foundations — 28 day map" : "Your map"}
         </p>
 
         <div className="relative mt-4">
@@ -373,7 +373,7 @@ function DashboardPage() {
             <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border text-muted-foreground">
               <Crown className="h-6 w-6" />
             </span>
-            <p className="hud text-[9px] text-muted-foreground">NEXT UNIT — CLASSIFIED</p>
+            <p className="hud text-[9px] text-muted-foreground">Next unit — locked</p>
           </div>
         </div>
       </section>

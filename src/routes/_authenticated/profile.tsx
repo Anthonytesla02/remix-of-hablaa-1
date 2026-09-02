@@ -36,7 +36,7 @@ function ProfilePage() {
   const setSetting = useApp((s) => s.setSetting);
   const resetAll = useApp((s) => s.resetAll);
   const clearance = useClearance();
-  const { character, personality, bond, memory, ready: hasCompanion } = useCompanion();
+  const { character, personality, memory, ready: hasCompanion } = useCompanion();
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
@@ -88,16 +88,6 @@ function ProfilePage() {
               {personality.label.toUpperCase()}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">{character.bio}</p>
-            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-secondary"
-                style={{ width: `${Math.round(bond.progress * 100)}%` }}
-              />
-            </div>
-            <p className="hud mt-1.5 text-[9px] text-primary">
-              {bond.current.label.toUpperCase()}
-              {bond.next ? ` → ${bond.next.label.toUpperCase()}` : ""}
-            </p>
           </>
         ) : (
           <p className="mt-1 text-[11px]">

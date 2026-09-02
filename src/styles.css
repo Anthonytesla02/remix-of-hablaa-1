@@ -5,16 +5,17 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * OPERATION LINGUA — "field dossier" design system.
- * Void Slate ground, Dossier Cream paper, stamped teletype headers.
+ * OPERATION LINGUA — "playful field kit" design system.
+ * Warm paper ground, chunky rounded cards, candy-bright accents and
+ * squishy 3D buttons. Friendly first, still a little bit mission-y.
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 14px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -40,43 +41,42 @@
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
   --color-amber: var(--amber);
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Nunito", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Nunito", ui-rounded, ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  --radius: 0.25rem;
-  /* Void Slate #12151B */
-  --background: oklch(0.194 0.011 265);
-  /* Dossier Cream #EDE6D6 */
-  --foreground: oklch(0.921 0.021 88);
-  --card: oklch(0.243 0.012 265);
-  --card-foreground: oklch(0.921 0.021 88);
-  --popover: oklch(0.243 0.012 265);
-  --popover-foreground: oklch(0.921 0.021 88);
-  /* Field Amber #E3A23C */
-  --primary: oklch(0.762 0.128 72);
-  --primary-foreground: oklch(0.194 0.011 265);
-  /* Signal Cyan #4FA8B8 */
-  --secondary: oklch(0.673 0.076 213);
-  --secondary-foreground: oklch(0.194 0.011 265);
-  --muted: oklch(0.283 0.012 265);
-  --muted-foreground: oklch(0.68 0.014 88);
-  --accent: oklch(0.283 0.012 265);
-  --accent-foreground: oklch(0.921 0.021 88);
-  /* Classified Red #B3272C */
-  --destructive: oklch(0.485 0.183 27);
-  --destructive-foreground: oklch(0.96 0.01 88);
-  --border: oklch(0.34 0.012 265);
-  --input: oklch(0.34 0.012 265);
-  --ring: oklch(0.762 0.128 72);
-  --paper: oklch(0.921 0.021 88);
-  --paper-foreground: oklch(0.24 0.012 265);
-  /* Redact Black #0A0B0D — reserved for redaction bars */
-  --redact: oklch(0.132 0.004 265);
-  --signal: oklch(0.673 0.076 213);
-  --signal-foreground: oklch(0.194 0.011 265);
-  --amber: oklch(0.762 0.128 72);
+  --radius: 1rem;
+  /* Warm paper */
+  --background: oklch(0.982 0.012 85);
+  /* Deep friendly ink */
+  --foreground: oklch(0.32 0.031 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.32 0.031 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.32 0.031 258);
+  /* Coral pop */
+  --primary: oklch(0.68 0.18 32);
+  --primary-foreground: oklch(0.995 0.005 85);
+  /* Mint teal */
+  --secondary: oklch(0.72 0.13 178);
+  --secondary-foreground: oklch(0.24 0.03 258);
+  --muted: oklch(0.945 0.014 85);
+  --muted-foreground: oklch(0.55 0.026 258);
+  --accent: oklch(0.94 0.045 90);
+  --accent-foreground: oklch(0.32 0.031 258);
+  --destructive: oklch(0.6 0.19 25);
+  --destructive-foreground: oklch(0.99 0.005 85);
+  --border: oklch(0.9 0.018 85);
+  --input: oklch(0.9 0.018 85);
+  --ring: oklch(0.68 0.18 32);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.32 0.031 258);
+  --redact: oklch(0.3 0.03 258);
+  --signal: oklch(0.72 0.13 178);
+  --signal-foreground: oklch(0.24 0.03 258);
+  /* Sunshine */
+  --amber: oklch(0.83 0.15 82);
 }
 
 @layer base {
@@ -93,50 +93,93 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-weight: 600;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  /* Every tappable thing gets a friendly squish. */
+  button,
+  a,
+  [role="button"] {
+    transition:
+      transform 120ms cubic-bezier(0.2, 0.9, 0.3, 1.4),
+      filter 140ms ease,
+      background-color 140ms ease,
+      border-color 140ms ease;
+  }
+
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.96);
   }
 }
 
+/* Friendly label style (was teletype). */
 @utility hud {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
+/* Soft playful backdrop with blurry colour blobs. */
 @utility topo {
   background-color: var(--color-background);
   background-image:
-    radial-gradient(ellipse 120% 80% at 50% -10%, oklch(0.673 0.076 213 / 0.08), transparent 60%),
-    repeating-radial-gradient(
-      circle at 20% 30%,
-      transparent 0 22px,
-      oklch(0.921 0.021 88 / 0.035) 22px 23px
-    ),
-    repeating-radial-gradient(
-      circle at 85% 75%,
-      transparent 0 26px,
-      oklch(0.921 0.021 88 / 0.03) 26px 27px
-    );
+    radial-gradient(ellipse 70% 40% at 12% -5%, oklch(0.72 0.13 178 / 0.22), transparent 65%),
+    radial-gradient(ellipse 60% 34% at 95% 8%, oklch(0.68 0.18 32 / 0.16), transparent 62%),
+    radial-gradient(ellipse 80% 40% at 50% 108%, oklch(0.83 0.15 82 / 0.2), transparent 68%);
+  background-attachment: fixed;
 }
 
+/* Chunky rounded card with a soft drop. */
 @utility paper-card {
-  background-color: var(--color-paper);
-  color: var(--color-paper-foreground);
-  border-radius: var(--radius);
-  box-shadow: 0 10px 24px -12px oklch(0 0 0 / 0.8);
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  box-shadow: 0 6px 0 -1px oklch(0.9 0.018 85), 0 14px 28px -18px oklch(0.3 0.03 258 / 0.55);
   position: relative;
 }
 
+@utility card-soft {
+  background-color: var(--color-card);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  box-shadow: 0 4px 0 -1px oklch(0.9 0.018 85);
+}
+
+/* Duolingo-ish 3D button: sits on a ledge, squashes on press. */
+@utility btn-3d {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 5px 0 0 color-mix(in oklab, currentColor 0%, oklch(0.3 0.03 258 / 0.22));
+  transform: translateY(0);
+  transition:
+    transform 90ms ease,
+    box-shadow 90ms ease;
+}
+
+@utility btn-3d-press {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 0 oklch(0.3 0.03 258 / 0.22);
+}
+
 @utility stamp {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.06em;
   border: 2px solid currentColor;
-  transform: rotate(-6deg);
-  padding: 0.15rem 0.5rem;
-  opacity: 0.9;
+  border-radius: 999px;
+  transform: rotate(-4deg);
+  padding: 0.15rem 0.6rem;
+  opacity: 0.95;
 }
 
 @keyframes wipe-away {
@@ -154,15 +197,15 @@
 
 @keyframes stamp-in {
   0% {
-    transform: rotate(-18deg) scale(1.6);
+    transform: rotate(-14deg) scale(1.5);
     opacity: 0;
   }
   60% {
-    transform: rotate(-6deg) scale(0.96);
+    transform: rotate(-4deg) scale(0.94);
     opacity: 1;
   }
   100% {
-    transform: rotate(-6deg) scale(1);
+    transform: rotate(-4deg) scale(1);
     opacity: 1;
   }
 }
@@ -174,10 +217,10 @@
 @keyframes signal-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 oklch(0.673 0.076 213 / 0.55);
+    box-shadow: 0 0 0 0 oklch(0.68 0.18 32 / 0.5);
   }
   50% {
-    box-shadow: 0 0 0 16px oklch(0.673 0.076 213 / 0);
+    box-shadow: 0 0 0 16px oklch(0.68 0.18 32 / 0);
   }
 }
 
@@ -196,11 +239,11 @@
 
 @keyframes handler-pop {
   0% {
-    transform: translateY(8px) scale(0.9);
+    transform: translateY(10px) scale(0.85);
     opacity: 0;
   }
   70% {
-    transform: translateY(0) scale(1.02);
+    transform: translateY(0) scale(1.06);
     opacity: 1;
   }
   100% {
@@ -210,37 +253,36 @@
 }
 
 @utility handler-pop {
-  animation: handler-pop 260ms ease-out both;
+  animation: handler-pop 300ms cubic-bezier(0.2, 0.9, 0.3, 1.5) both;
 }
 
 @keyframes handler-bob {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-1deg);
   }
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-4px) rotate(1deg);
   }
 }
 
 @utility handler-idle {
-  animation: handler-bob 3.2s ease-in-out infinite;
+  animation: handler-bob 3s ease-in-out infinite;
 }
 
-/* Handler avatar: talking + gesturing while the system speaks */
 @keyframes handler-talk {
   0%,
   100% {
     transform: translateY(0) scale(1) rotate(0deg);
   }
   25% {
-    transform: translateY(-2px) scale(1.06) rotate(-3deg);
+    transform: translateY(-3px) scale(1.07) rotate(-4deg);
   }
   50% {
-    transform: translateY(1px) scale(0.98) rotate(2deg);
+    transform: translateY(1px) scale(0.97) rotate(3deg);
   }
   75% {
-    transform: translateY(-1px) scale(1.04) rotate(3deg);
+    transform: translateY(-1px) scale(1.05) rotate(4deg);
   }
 }
 
@@ -250,7 +292,7 @@
 
 @keyframes handler-ring {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 55%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
   }
   100% {
     box-shadow: 0 0 0 14px transparent;
@@ -280,16 +322,34 @@
 @keyframes burst-ring {
   0% {
     transform: scale(0.3);
-    opacity: 0.9;
+    opacity: 0.85;
   }
   100% {
-    transform: scale(2.6);
+    transform: scale(2.8);
     opacity: 0;
   }
 }
 
 @utility burst-ring {
   animation: burst-ring 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx, 0), 105vh, 0) rotate(var(--spin, 540deg));
+    opacity: 0.9;
+  }
+}
+
+@utility confetti-fall {
+  animation: confetti-fall var(--dur, 1.6s) cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
 }
 
 @keyframes spark-fly {
@@ -309,34 +369,86 @@
 
 @keyframes seal-in {
   0% {
-    transform: scale(1.8) rotate(-14deg);
+    transform: scale(0.3) rotate(-12deg);
     opacity: 0;
   }
   55% {
-    transform: scale(0.94) rotate(-4deg);
+    transform: scale(1.12) rotate(3deg);
     opacity: 1;
   }
+  75% {
+    transform: scale(0.97) rotate(-1deg);
+  }
   100% {
-    transform: scale(1) rotate(-6deg);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
 }
 
 @utility seal-in {
-  animation: seal-in 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  animation: seal-in 620ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
 }
 
 @keyframes step-in {
   0% {
-    transform: translateX(18px);
+    transform: translateX(18px) scale(0.98);
     opacity: 0;
   }
   100% {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 @utility step-in {
-  animation: step-in 260ms ease-out both;
+  animation: step-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility pop-in {
+  animation: pop-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@utility wiggle {
+  animation: wiggle 420ms ease-in-out;
+}
+
+@keyframes bounce-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@utility bounce-soft {
+  animation: bounce-soft 1.6s ease-in-out infinite;
 }
