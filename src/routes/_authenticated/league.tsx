@@ -49,7 +49,7 @@ function LeaguePage() {
 
   return (
     <AppFrame>
-      <h1 className="hud text-lg">{rank?.name.toUpperCase() ?? "TRAINEE CELL"}</h1>
+      <h1 className="hud text-lg">{rank?.name ?? "Sprouts"}</h1>
       <p className="mt-1 text-xs text-muted-foreground">
         Top 3 promote · bottom 3 demote at week's end. Opponents are AI-paced ghost operatives —
         live multiplayer needs a server.
