@@ -17,13 +17,13 @@ export const Route = createFileRoute("/_authenticated/vault")({
   }),
   head: () => ({
     meta: [
-      { title: "Practice Deck — Active Recall Drills" },
+      { title: "Practice Deck — Habla" },
       {
         name: "description",
         content:
           "Quiz-style active recall: one item at a time, recall it from memory, self-grade and bank XP. Scheduled by a modified SM-2 engine.",
       },
-      { property: "og:title", content: "Practice Deck — Active Recall Drills" },
+      { property: "og:title", content: "Practice Deck — Habla" },
       {
         property: "og:description",
         content: "One-card-at-a-time recall drills with XP, combos and spaced-repetition scheduling.",
@@ -146,7 +146,7 @@ function VaultPage() {
 
   return (
     <AppFrame>
-      <h1 className="hud text-lg">PRACTICE DECK</h1>
+      <h1 className="hud text-lg">Practice deck</h1>
       <p className="mt-1 text-xs text-muted-foreground">
         {total} items filed · {dueTotal} due now · active recall, one item at a time
       </p>
@@ -259,7 +259,7 @@ function RecallRun({
     return (
       <AppFrame tabs={false}>
         <div className="paper-card p-5">
-          <p className="stamp stamp-in inline-block text-destructive">VAULT SERVICED</p>
+          <p className="stamp stamp-in inline-block text-destructive">Nice practice!</p>
           <h1 className="hud mt-4 text-lg">RECALL REPORT</h1>
           <dl className="hud mt-4 space-y-2 text-[11px]">
             <div className="flex justify-between">
@@ -285,7 +285,7 @@ function RecallRun({
           onClick={onExit}
           className="hud mt-4 w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
         >
-          BACK TO VAULT
+          Back to practice
         </button>
       </AppFrame>
     );
@@ -294,7 +294,7 @@ function RecallRun({
   if (!card) {
     return (
       <AppFrame tabs={false}>
-        <p className="hud text-center text-xs text-muted-foreground">THIS DECK IS EMPTY.</p>
+        <p className="hud text-center text-xs text-muted-foreground">Nothing here yet.</p>
         <button
           onClick={onExit}
           className="hud mt-4 w-full rounded-sm border border-border py-3 text-[10px]"
@@ -327,7 +327,7 @@ function RecallRun({
       </p>
 
       <div className="paper-card mt-3 p-4">
-        <p className="hud text-[9px] text-destructive">SAY IT IN THE TARGET LANGUAGE</p>
+        <p className="hud text-[9px] text-destructive">Say it out loud</p>
         <p className="mt-2 text-xl leading-snug">{card.translation}</p>
 
         {revealed ? (

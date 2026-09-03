@@ -33,7 +33,7 @@ function ShopPage() {
 
   return (
     <AppFrame>
-      <h1 className="hud text-lg">SUPPLY DEPOT</h1>
+      <h1 className="hud text-lg">Shop</h1>
       <p className="mt-1 text-xs text-muted-foreground">
         Balance: <span className="text-secondary">{credits} Coins</span> · earn 1 IC per 20
         XP, plus daily check-in and streak milestones.
