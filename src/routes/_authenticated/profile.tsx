@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  Archive,
   ChevronRight,
+
   Dumbbell,
   LogOut,
   Music,
@@ -149,7 +151,22 @@ function ProfilePage() {
           <Shortcut to="/league" icon={Trophy} label="League" />
           <Shortcut to="/shop" icon={ShoppingBag} label="Shop" />
         </div>
+        <Link
+          to="/backup"
+          onClick={() => sfx("tap")}
+          className="mt-2 flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-3 py-3"
+        >
+          <Archive className="h-5 w-5 text-secondary" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12px] font-extrabold">Backup &amp; restore</span>
+            <span className="block text-[10px] text-muted-foreground">
+              Save your progress to a file or bring one in.
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
       </section>
+
 
       <section className="mt-6">
         <p className="text-[11px] font-extrabold text-muted-foreground">Settings</p>
