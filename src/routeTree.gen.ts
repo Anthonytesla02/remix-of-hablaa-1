@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
 import { Route as AuthenticatedCompanionRouteImport } from './routes/_authenticated/companion'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLeagueRouteImport } from './routes/_authenticated/league'
@@ -34,6 +35,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBackupRoute = AuthenticatedBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCompanionRoute = AuthenticatedCompanionRouteImport.update({
   id: '/companion',
@@ -79,6 +85,7 @@ const AuthenticatedVaultRoute = AuthenticatedVaultRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backup': typeof AuthenticatedBackupRoute
   '/companion': typeof AuthenticatedCompanionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/league': typeof AuthenticatedLeagueRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backup': typeof AuthenticatedBackupRoute
   '/companion': typeof AuthenticatedCompanionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/league': typeof AuthenticatedLeagueRoute
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/backup': typeof AuthenticatedBackupRoute
   '/_authenticated/companion': typeof AuthenticatedCompanionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/league': typeof AuthenticatedLeagueRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/backup'
     | '/companion'
     | '/dashboard'
     | '/league'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/backup'
     | '/companion'
     | '/dashboard'
     | '/league'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/backup'
     | '/_authenticated/companion'
     | '/_authenticated/dashboard'
     | '/_authenticated/league'
@@ -182,6 +194,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/backup': {
+      id: '/_authenticated/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof AuthenticatedBackupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/companion': {
       id: '/_authenticated/companion'
@@ -243,6 +262,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBackupRoute: typeof AuthenticatedBackupRoute
   AuthenticatedCompanionRoute: typeof AuthenticatedCompanionRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLeagueRoute: typeof AuthenticatedLeagueRoute
@@ -254,6 +274,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBackupRoute: AuthenticatedBackupRoute,
   AuthenticatedCompanionRoute: AuthenticatedCompanionRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLeagueRoute: AuthenticatedLeagueRoute,
