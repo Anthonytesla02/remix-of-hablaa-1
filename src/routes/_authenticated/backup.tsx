@@ -51,7 +51,7 @@ function BackupPage() {
     try {
       const b = await buildBackup();
       downloadBackup(b);
-      sfx("win");
+      sfx("complete");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't create the backup.");
     } finally {
@@ -78,7 +78,7 @@ function BackupPage() {
     setBusy("restore");
     try {
       setReport(await restoreBackup(picked.file));
-      sfx("win");
+      sfx("complete");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Restore failed.");
     } finally {
