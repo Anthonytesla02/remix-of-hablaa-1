@@ -54,9 +54,11 @@ export function Tutorial() {
   useEffect(() => {
     if (!step || !onPage) return;
     let alive = true;
+    // On the lesson page let the tutor say the word itself first, then talk over it.
+    const delay = step.id === "first-word" ? 2600 : 450;
     const t = setTimeout(() => {
       if (alive) void speak(`${step.title}. ${step.text}`, "en-US", Math.min(0.9, rate));
-    }, 450);
+    }, delay);
     return () => {
       alive = false;
       clearTimeout(t);
