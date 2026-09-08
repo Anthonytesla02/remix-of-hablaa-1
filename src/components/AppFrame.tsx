@@ -6,12 +6,12 @@ import { HandlerAvatar } from "@/components/Handler";
 import { useApp, useLevel } from "@/lib/store";
 
 const TABS = [
-  { to: "/dashboard", label: "Learn", icon: Map },
-  { to: "/simulate", label: "Talk", icon: MessageCircle },
-  { to: "/vault", label: "Practice", icon: Dumbbell },
-  { to: "/league", label: "League", icon: Trophy },
-  { to: "/shop", label: "Shop", icon: ShoppingBag },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/dashboard", label: "Learn", icon: Map, tour: "tab-learn" },
+  { to: "/simulate", label: "Talk", icon: MessageCircle, tour: "tab-talk" },
+  { to: "/vault", label: "Practice", icon: Dumbbell, tour: "tab-practice" },
+  { to: "/league", label: "League", icon: Trophy, tour: "tab-league" },
+  { to: "/shop", label: "Shop", icon: ShoppingBag, tour: "tab-shop" },
+  { to: "/profile", label: "Profile", icon: User, tour: "tab-profile" },
 ] as const;
 
 export function HudBar() {
@@ -59,6 +59,7 @@ export function TabBar() {
             <li key={t.to}>
               <Link
                 to={t.to}
+                data-tour={t.tour}
                 className={`flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors ${
                   active ? "bg-primary/12 text-primary" : "text-muted-foreground"
                 }`}
