@@ -31,6 +31,7 @@ import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { gradePronunciation } from "@/lib/pronunciation.functions";
 import { normalize } from "@/lib/text-compare";
 import { useApp } from "@/lib/store";
+import { TOUR_STEP } from "@/lib/tutorial";
 import type { StepResult } from "@/components/steps";
 
 type Props = { locale: string; onDone: (r: StepResult) => void };
@@ -241,6 +242,8 @@ function VocabDrill({
       });
       setResult(grade);
       setPhase("result");
+      const tStep = useApp.getState().tutorialStep;
+      if (tStep === TOUR_STEP['first-mic']) useApp.getState().setTutorialStep(TOUR_STEP['done']!);
       if (grade.grade === "exact") addXp(3);
       else if (grade.grade === "close") addXp(1);
       if (grade.grade !== "miss") {
@@ -270,7 +273,7 @@ function VocabDrill({
         </p>
       </div>
 
-      <div className="mt-4 text-center">
+      <div className="mt-4 text-center" data-tour="vocab-word">
         <p className="text-3xl leading-tight">{word.es}</p>
         <p className="hud mt-1 text-[10px] text-muted-foreground">{word.en.toUpperCase()}</p>
       </div>
@@ -295,6 +298,7 @@ function VocabDrill({
           <button
             type="button"
             onClick={toggleMic}
+            data-tour="vocab-mic"
             disabled={phase === "grading"}
             className={`hud flex w-full items-center justify-center gap-2 rounded-sm border py-3 text-[11px] ${
               recording

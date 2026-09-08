@@ -56,6 +56,10 @@ type State = {
   /** Week numbers whose recall simulation has been cleared. */
   weeklyRecallDone: number[];
 
+  /** First-run walkthrough: -1 = not running. */
+  tutorialStep: number;
+  tutorialDone: boolean;
+
   /** Who your language partner is. Null until they pick one. */
   companion: CompanionConfig | null;
   /** What the AI remembers you keep getting wrong. */
@@ -82,6 +86,9 @@ type State = {
   completeWeeklyRecall: (week: number, xp: number) => void;
   setCompanion: (c: Partial<CompanionConfig>) => void;
   noteMistake: (tag: string, detail: string) => void;
+  startTutorial: () => void;
+  setTutorialStep: (n: number) => void;
+  endTutorial: () => void;
 };
 
 export type CompanionConfig = {
@@ -165,6 +172,8 @@ const initial = {
   weeklyRecallDone: [] as number[],
   companion: null as CompanionConfig | null,
   mistakeMemory: {} as Record<string, MistakeNote>,
+  tutorialStep: -1,
+  tutorialDone: false,
 
 };
 
@@ -308,6 +317,13 @@ export const useApp = create<State>()(
             ...c,
           },
         })),
+
+      startTutorial: () =>
+        set((s) => (s.tutorialDone || s.tutorialStep >= 0 ? s : { tutorialStep: 0 })),
+
+      setTutorialStep: (n) => set({ tutorialStep: n }),
+
+      endTutorial: () => set({ tutorialStep: -1, tutorialDone: true }),
 
       noteMistake: (tag, detail) =>
         set((s) => {

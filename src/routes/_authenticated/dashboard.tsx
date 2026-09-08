@@ -16,6 +16,7 @@ import {
 import { handlerSay } from "@/lib/handler-bus";
 import { monthKey, useApp, weekKey, type CheckInResult } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
+import { TOUR_STEP } from "@/lib/tutorial";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -64,14 +65,21 @@ function DashboardPage() {
   const weeklyRecallDone = useApp((s) => s.weeklyRecallDone);
   const [justChecked, setJustChecked] = useState<CheckInResult | null>(null);
   const completeChallenge = useApp((s) => s.completeChallenge);
+  const tutorialStep = useApp((s) => s.tutorialStep);
+  const startTutorial = useApp((s) => s.startTutorial);
+  const setTutorialStep = useApp((s) => s.setTutorialStep);
 
   useEffect(() => {
     if (!profile) void navigate({ to: "/" });
-    else registerLogin();
-  }, [profile, navigate, registerLogin]);
+    else {
+      registerLogin();
+      startTutorial();
+    }
+  }, [profile, navigate, registerLogin, startTutorial]);
 
   useEffect(() => {
     if (!profile) return;
+    if (useApp.getState().tutorialStep >= 0) return;
     const t = setTimeout(
       () =>
         handlerSay(
@@ -168,6 +176,10 @@ function DashboardPage() {
           <Link
             to="/session"
             search={{ day: activeNode.key, mode: "mission" }}
+            data-tour="start-lesson"
+            onClick={() => {
+              if (tutorialStep === TOUR_STEP['start-lesson']) setTutorialStep(TOUR_STEP['first-word']!);
+            }}
             className="hud mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-background py-3 text-xs text-primary"
           >
             <Target className="h-4 w-4" /> {courseOn ? "Start today's lesson" : "Start lesson"}
