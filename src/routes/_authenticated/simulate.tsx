@@ -586,6 +586,19 @@ function SimulatePage() {
     void advance(clean, history);
   }
 
+  /** Bragging-rights summary of the run. */
+  function battleStats(xp: number): BattleStats {
+    return {
+      title: scene?.label ?? "Conversation",
+      flag: character?.flag ?? "🇪🇸",
+      seconds: startedAt ? (Date.now() - startedAt) / 1000 : 0,
+      accuracy: attempts ? Math.max(0, (attempts - crimes) / attempts) : 1,
+      crimes,
+      xp,
+      tutor: character?.name ?? "the tutor",
+    };
+  }
+
   /** Rough pre-guess so roast pacing can be decided before the model answers. */
   function verdictSeverityGuess(text: string) {
     return text.split(/\s+/).length <= 2 ? 2 : 3;
