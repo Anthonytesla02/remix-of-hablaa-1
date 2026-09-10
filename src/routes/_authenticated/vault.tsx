@@ -55,7 +55,7 @@ function VaultPage() {
   const completedDays = useApp((s) => s.completedDays);
 
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
   }, [profile, navigate]);
 
   const [runId, setRunId] = useState<string | null>(null);

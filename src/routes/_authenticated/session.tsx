@@ -113,7 +113,7 @@ function SessionPage() {
   }, [dayKey, mode, profile?.langId, lesson?.id]);
 
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
   }, [profile, navigate]);
 
   // A new target (or a re-run) starts a clean slate — the route stays mounted

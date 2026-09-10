@@ -70,7 +70,7 @@ function DashboardPage() {
   const setTutorialStep = useApp((s) => s.setTutorialStep);
 
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
     else {
       registerLogin();
       startTutorial();
