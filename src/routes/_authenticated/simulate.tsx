@@ -306,7 +306,16 @@ function SimulatePage() {
   const addXp = useApp((s) => s.addXp);
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const noteMistake = useApp((s) => s.noteMistake);
-  const { brief, character, personality, ready: hasCompanion } = useCompanion();
+  const mistakeMemory = useApp((s) => s.mistakeMemory);
+  const {
+    brief,
+    character,
+    personality,
+    policy,
+    coachLocale,
+    interjectOnly,
+    ready: hasCompanion,
+  } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
