@@ -262,5 +262,7 @@ export type CompanionBrief = {
   roast: number;
   localMode: boolean;
   noTranslate: boolean;
+  /** Only speaks up when the learner actually makes a mistake. */
+  interjectOnly: boolean;
   memory: string[];
 };

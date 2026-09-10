@@ -5,6 +5,7 @@ import {
   personalityById,
   type CompanionBrief,
 } from "@/lib/companions";
+import { policyForRoastDial } from "@/lib/severity";
 import { useApp } from "@/lib/store";
 
 /**
@@ -23,11 +24,13 @@ export function useCompanion() {
     // A character carries their own teaching style unless the learner overrode it.
     const personality = personalityById(config?.personalityId ?? character?.personalityId);
 
-    const memory = Object.values(mistakeMemory)
+    const notes = Object.values(mistakeMemory)
       .filter((m) => m.count >= 2)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4)
-      .map((m) => `${m.tag} (${m.count}\u00d7) \u2014 ${m.detail}`);
+      .slice(0, 4);
+    const memory = notes.map((m) => `${m.tag} (${m.count}\u00d7) \u2014 ${m.detail}`);
+
+    const interjectOnly = Boolean(character?.interjectOnly || personality.id === "philly");
 
     const brief: CompanionBrief = {
       personality: personality.behaviour,
@@ -38,9 +41,22 @@ export function useCompanion() {
       roast: config?.roast ?? 1,
       localMode: config?.localMode ?? true,
       noTranslate: config?.noTranslate ?? false,
+      interjectOnly,
       memory,
     };
 
-    return { config, personality, character, memory, brief, ready: Boolean(config) };
+    return {
+      config,
+      personality,
+      character,
+      memory,
+      notes,
+      brief,
+      interjectOnly,
+      /** Locale used when the tutor coaches in their own accent. */
+      coachLocale: character?.voiceLocale ?? null,
+      policy: policyForRoastDial(config?.roast ?? 1),
+      ready: Boolean(config),
+    };
   }, [config, mistakeMemory, langId]);
 }
