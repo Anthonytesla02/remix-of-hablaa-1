@@ -147,6 +147,8 @@ export type NativeCharacter = {
   teaches: string;
   /** Locale used for this tutor's own coaching voice (their accent). */
   voiceLocale?: string;
+  /** Preferred browser voice presentation for this character. */
+  voiceGender?: "male" | "female";
   /** Stays silent unless the learner makes a real mistake. */
   interjectOnly?: boolean;
 };
@@ -224,6 +226,7 @@ export const CHARACTERS: NativeCharacter[] = [
       "Speaks Spanish with a clear American accent, but coaches you in Philadelphia English: jawn, bul, drawlin', wit'out, \"yo\", \"hold up\", \"nah you buggin'\", \"say less\".",
     locale: "es-MX",
     voiceLocale: "en-US",
+    voiceGender: "male",
     interjectOnly: true,
     avatar: reeseImg,
     personalityId: "philly",

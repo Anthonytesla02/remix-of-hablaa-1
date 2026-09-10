@@ -46,7 +46,43 @@ const QUALITY = [
   "microsoft",
 ];
 
-function score(v: SpeechSynthesisVoice) {
+const MALE_VOICE_NAMES = [
+  "aaron",
+  "alvaro",
+  "carlos",
+  "daniel",
+  "david",
+  "diego",
+  "eddy",
+  "guy",
+  "jorge",
+  "mark",
+  "pablo",
+  "paul",
+  "raul",
+  "reed",
+  "rocko",
+  "thomas",
+];
+
+const FEMALE_VOICE_NAMES = [
+  "ava",
+  "carmen",
+  "elena",
+  "flo",
+  "helena",
+  "jenny",
+  "laura",
+  "maria",
+  "monica",
+  "paulina",
+  "samantha",
+  "shelley",
+  "sofia",
+  "susan",
+];
+
+function score(v: SpeechSynthesisVoice, preferredGender?: "male" | "female") {
   const n = v.name.toLowerCase();
   let s = 0;
   QUALITY.forEach((q, i) => {
@@ -54,17 +90,25 @@ function score(v: SpeechSynthesisVoice) {
   });
   if (!v.localService) s += 5; // cloud voices are usually the good ones
   if (n.includes("compact") || n.includes("espeak")) s -= 30;
+  if (preferredGender === "male") {
+    if (MALE_VOICE_NAMES.some((name) => n.includes(name))) s += 100;
+    if (FEMALE_VOICE_NAMES.some((name) => n.includes(name))) s -= 100;
+  }
+  if (preferredGender === "female") {
+    if (FEMALE_VOICE_NAMES.some((name) => n.includes(name))) s += 100;
+    if (MALE_VOICE_NAMES.some((name) => n.includes(name))) s -= 100;
+  }
   return s;
 }
 
-function pickVoice(locale: string) {
+function pickVoice(locale: string, preferredGender?: "male" | "female") {
   if (!ttsSupported()) return undefined;
   if (voicesCache.length === 0) voicesCache = window.speechSynthesis.getVoices();
   const base = locale.split("-")[0] ?? locale;
   const exact = voicesCache.filter((v) => v.lang.replace("_", "-") === locale);
   const loose = voicesCache.filter((v) => v.lang.replace("_", "-").startsWith(base));
   const pool = exact.length > 0 ? exact : loose;
-  return [...pool].sort((a, b) => score(b) - score(a))[0];
+  return [...pool].sort((a, b) => score(b, preferredGender) - score(a, preferredGender))[0];
 }
 
 /* ---------------------------------------------------------------- *
@@ -92,7 +136,12 @@ function setSpeaking(next: SpeakingState) {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function speak(text: string, locale: string, rate = 1): Promise<void> {
+export async function speak(
+  text: string,
+  locale: string,
+  rate = 1,
+  preferredGender?: "male" | "female",
+): Promise<void> {
   if (!ttsSupported() || !text) return;
   const synth = window.speechSynthesis;
   try {
@@ -118,7 +167,7 @@ export async function speak(text: string, locale: string, rate = 1): Promise<voi
       const u = new SpeechSynthesisUtterance(text);
       u.lang = locale;
       u.rate = rate;
-      const v = pickVoice(locale);
+      const v = pickVoice(locale, preferredGender);
       if (v) u.voice = v;
       u.onend = finish;
       u.onerror = finish;

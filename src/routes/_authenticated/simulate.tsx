@@ -27,7 +27,7 @@ import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { Completion } from "@/components/Completion";
 import { Glossed } from "@/components/Glossed";
 import { Redaction } from "@/components/Redaction";
-import { PlayButton, useSpeaker } from "@/components/Audio";
+import { PlayButton } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
@@ -352,7 +352,6 @@ function SimulatePage() {
 
   const locale = bcp47(profile?.langId ?? "spanish");
   const language = langById(profile?.langId ?? "spanish")?.label ?? "Spanish";
-  const say = useSpeaker(locale);
 
   useEffect(() => {
     if (!sttSupported()) setUseText(true);
@@ -396,7 +395,7 @@ function SimulatePage() {
   async function speakCharacter(text: string) {
     if (muted) return;
     ambienceRef.current?.duck(true);
-    await say(text);
+    await speak(text, locale, personality.rate, character?.voiceGender);
     ambienceRef.current?.duck(false);
   }
 
@@ -506,7 +505,7 @@ function SimulatePage() {
   /** The tutor's own voice: their accent for coaching, target voice for the phrase. */
   function coachVoice(text: string) {
     if (!text) return;
-    void speak(text, coachLocale ?? locale, 0.98);
+    void speak(text, coachLocale ?? locale, personality.rate, character?.voiceGender);
   }
 
   async function sendText(text: string) {
