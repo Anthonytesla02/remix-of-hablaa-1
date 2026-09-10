@@ -1091,11 +1091,58 @@ function SimulatePage() {
               </div>
             )}
 
+            {(correction.retry || correction.better) && (
+              <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/5 p-2.5">
+                <p className="hud text-[9px] text-secondary">YOUR TURN · SAY IT BACK</p>
+                {retryState === "again" && (
+                  <p className="mt-1 text-[11px] text-destructive">Not quite — one more time.</p>
+                )}
+                {retryState === "ok" && (
+                  <p className="mt-1 text-[11px] text-primary">That's it. Back to the scene…</p>
+                )}
+                <div className="mt-2 flex gap-2">
+                  {sttSupported() && (
+                    <button
+                      onClick={retryByVoice}
+                      className={`hud flex-1 rounded-sm border py-2.5 text-[10px] ${
+                        retryState === "listening"
+                          ? "mic-live border-secondary text-secondary"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {retryState === "listening" ? (
+                        <>
+                          <Square className="mr-1 inline h-3 w-3" /> STOP
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="mr-1 inline h-3 w-3" /> REPEAT IT
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => submitRetry(retryText)}
+                    disabled={!retryText.trim()}
+                    className="hud flex-1 rounded-sm bg-primary py-2.5 text-[10px] text-primary-foreground disabled:opacity-40"
+                  >
+                    <Send className="mr-1 inline h-3 w-3" /> CHECK
+                  </button>
+                </div>
+                <input
+                  value={retryText}
+                  onChange={(e) => setRetryText(e.target.value)}
+                  placeholder="…or type it back"
+                  className="mt-2 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm outline-none focus:border-secondary"
+                />
+              </div>
+            )}
+
             <button
               onClick={closeCorrection}
-              className="hud mt-4 w-full rounded-sm bg-primary py-3 text-xs text-primary-foreground"
+              className="hud mt-4 w-full rounded-sm border border-border py-3 text-[11px] text-muted-foreground"
             >
-              GOT IT · CONTINUE
+              {correction.retry || correction.better ? "SKIP · CONTINUE" : "GOT IT · CONTINUE"}
             </button>
           </div>
         </div>
