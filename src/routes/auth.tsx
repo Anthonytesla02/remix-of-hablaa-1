@@ -33,7 +33,7 @@ function AuthPage() {
     void (async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
-      if (data.session) void navigate({ to: "/" });
+      if (data.session) void navigate({ to: "/start" });
     })();
     return () => {
       cancelled = true;
@@ -52,7 +52,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        void navigate({ to: "/" });
+        void navigate({ to: "/start" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -70,7 +70,7 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      void navigate({ to: "/" });
+      void navigate({ to: "/start" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google sign-in failed");
       setGoogleLoading(false);

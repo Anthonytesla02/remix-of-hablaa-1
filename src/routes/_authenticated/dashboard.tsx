@@ -13,6 +13,7 @@ import {
   passThreshold,
   unlockedSpecials,
 } from "@/lib/course";
+import { Completion } from "@/components/Completion";
 import { handlerSay } from "@/lib/handler-bus";
 import { monthKey, useApp, weekKey, type CheckInResult } from "@/lib/store";
 import { dueCards } from "@/lib/srs";
@@ -64,13 +65,14 @@ function DashboardPage() {
   const doCheckIn = useApp((s) => s.checkIn);
   const weeklyRecallDone = useApp((s) => s.weeklyRecallDone);
   const [justChecked, setJustChecked] = useState<CheckInResult | null>(null);
+  const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const completeChallenge = useApp((s) => s.completeChallenge);
   const tutorialStep = useApp((s) => s.tutorialStep);
   const startTutorial = useApp((s) => s.startTutorial);
   const setTutorialStep = useApp((s) => s.setTutorialStep);
 
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
     else {
       registerLogin();
       startTutorial();
@@ -144,6 +146,13 @@ function DashboardPage() {
 
   return (
     <AppFrame>
+      {celebration && (
+        <Completion
+          title={celebration.title}
+          subtitle={celebration.subtitle}
+          onDone={() => setCelebration(null)}
+        />
+      )}
       <section className="paper-card p-4">
         <p className="hud text-[10px] text-destructive">
           {allDone ? "All done for now" : "Today's lesson"}
@@ -203,7 +212,10 @@ function DashboardPage() {
           ) : (
             <button
               type="button"
-              onClick={() => completeChallenge(challenge.id, 25)}
+              onClick={() => {
+                completeChallenge(challenge.id, 25);
+                setCelebration({ title: "Challenge cleared!", subtitle: "+25 XP added to today" });
+              }}
               className="hud mt-3 w-full rounded-sm border border-secondary/60 py-2.5 text-[10px] text-secondary"
             >
               MARK CHALLENGE COMPLETE · +25 XP
@@ -227,7 +239,15 @@ function DashboardPage() {
         checkIns={checkIns}
         points={checkInPoints}
         result={justChecked}
-        onCheckIn={() => setJustChecked(doCheckIn())}
+        onCheckIn={() => {
+          const r = doCheckIn();
+          setJustChecked(r);
+          if (r)
+            setCelebration({
+              title: "Checked in!",
+              subtitle: `+${r.points} points · ${r.weekCount} days this week`,
+            });
+        }}
       />
 
       {recallWeeks.length > 0 && (

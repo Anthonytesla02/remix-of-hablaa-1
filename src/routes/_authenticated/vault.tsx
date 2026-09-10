@@ -7,6 +7,7 @@ import { Glossed } from "@/components/Glossed";
 import { arcTitle, bcp47, missionDays } from "@/lib/content";
 import { courseKey, courseLessons, hasCourse } from "@/lib/course";
 
+import { Completion } from "@/components/Completion";
 import { handlerReact, handlerSay } from "@/lib/handler-bus";
 import { useApp } from "@/lib/store";
 import type { SrsCard } from "@/lib/srs";
@@ -55,7 +56,7 @@ function VaultPage() {
   const completedDays = useApp((s) => s.completedDays);
 
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
   }, [profile, navigate]);
 
   const [runId, setRunId] = useState<string | null>(null);
@@ -221,6 +222,7 @@ function RecallRun({
   const [combo, setCombo] = useState(0);
   const [best, setBest] = useState(0);
   const [done, setDone] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
 
   const card = queue[i];
 
@@ -249,6 +251,7 @@ function RecallRun({
       addXp(nextPoints);
       handlerReact("recallDone", "proud");
       setDone(true);
+      setCelebrate(true);
     } else {
       setI(i + 1);
     }
@@ -258,6 +261,13 @@ function RecallRun({
     const accuracy = queue.length === 0 ? 0 : Math.round((hits / queue.length) * 100);
     return (
       <AppFrame tabs={false}>
+        {celebrate && (
+          <Completion
+            title="Practice complete!"
+            subtitle={`+${points} XP banked · ${accuracy}% recalled`}
+            onDone={() => setCelebrate(false)}
+          />
+        )}
         <div className="paper-card p-5">
           <p className="stamp stamp-in inline-block text-destructive">Nice practice!</p>
           <h1 className="hud mt-4 text-lg">RECALL REPORT</h1>

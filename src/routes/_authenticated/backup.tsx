@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ArrowLeft, Download, Loader2, Upload } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { sfx } from "@/lib/sfx";
+import { Completion } from "@/components/Completion";
 import {
   buildBackup,
   downloadBackup,
@@ -44,6 +45,7 @@ function BackupPage() {
   const [picked, setPicked] = useState<{ file: BackupFile; name: string } | null>(null);
   const [report, setReport] = useState<RestoreReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState<string | null>(null);
 
   async function onExport() {
     setError(null);
@@ -52,6 +54,7 @@ function BackupPage() {
       const b = await buildBackup();
       downloadBackup(b);
       sfx("complete");
+      setCelebrate("Your backup file is downloading");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't create the backup.");
     } finally {
@@ -79,6 +82,7 @@ function BackupPage() {
     try {
       setReport(await restoreBackup(picked.file));
       sfx("complete");
+      setCelebrate("Your progress is back");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Restore failed.");
     } finally {
@@ -88,6 +92,9 @@ function BackupPage() {
 
   return (
     <AppFrame>
+      {celebrate && (
+        <Completion title="All done!" subtitle={celebrate} onDone={() => setCelebrate(null)} />
+      )}
       <button
         onClick={() => {
           sfx("tap");

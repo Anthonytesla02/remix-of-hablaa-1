@@ -61,7 +61,7 @@ function ProfilePage() {
 
   useEffect(() => setSoundOff(sfxMuted()), []);
   useEffect(() => {
-    if (!profile) void navigate({ to: "/" });
+    if (!profile) void navigate({ to: "/start" });
   }, [profile, navigate]);
   if (!profile) return null;
 
@@ -272,7 +272,7 @@ function ProfilePage() {
         onClick={() => {
           if (confirm("Start over? All progress on this device is erased.")) {
             resetAll();
-            void navigate({ to: "/" });
+            void navigate({ to: "/start" });
           }
         }}
         className="mt-3 w-full rounded-2xl border-2 border-destructive/50 py-3 text-[12px] font-extrabold text-destructive"
