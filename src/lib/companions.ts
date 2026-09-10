@@ -212,6 +212,24 @@ export const CHARACTERS: NativeCharacter[] = [
     personalityId: "classmate",
     teaches: "Teaches by chatting: casual, quick, playful teasing when you slip.",
   },
+  {
+    id: "reese",
+    lang: "spanish",
+    name: "Reese",
+    flag: "🇺🇸",
+    region: "North Philly, Philadelphia",
+    age: 21,
+    bio: "YouTube language tutor. Records reaction videos in his bedroom, hoops on Sundays, will absolutely clown a bad sentence.",
+    dialect:
+      "Speaks Spanish with a clear American accent, but coaches you in Philadelphia English: jawn, bul, drawlin', wit'out, \"yo\", \"hold up\", \"nah you buggin'\", \"say less\".",
+    locale: "es-MX",
+    voiceLocale: "en-US",
+    interjectOnly: true,
+    avatar: reeseImg,
+    personalityId: "philly",
+    teaches:
+      "Stays out your way while you talk. The second you slip: reaction, correction, \"your turn\" — then back to the conversation.",
+  },
 ];
 
 export function charactersFor(lang: string) {
