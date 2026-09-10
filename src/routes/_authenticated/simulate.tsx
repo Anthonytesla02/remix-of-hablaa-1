@@ -332,14 +332,23 @@ function SimulatePage() {
   const [ended, setEnded] = useState(false);
   const [turns, setTurns] = useState(0);
   const [correction, setCorrection] = useState<
-    (CoachVerdict & { pending: string; history: Msg[] }) | null
+    (CoachVerdict & { pending: string; history: Msg[]; roasted: boolean; moment: string }) | null
   >(null);
+  /** Retry loop inside the correction: they must say it back before we continue. */
+  const [retryText, setRetryText] = useState("");
+  const [retryState, setRetryState] = useState<"idle" | "listening" | "ok" | "again">("idle");
   const [checking, setChecking] = useState(false);
   const [reward, setReward] = useState(0);
+  const [crimes, setCrimes] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [startedAt, setStartedAt] = useState(0);
 
   const ambienceRef = useRef<Ambience | null>(null);
   const stopListenRef = useRef<() => void>(() => {});
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const gateRef = useRef(new ReactionGate(policy));
+  const cleanStreak = useRef(0);
+  const struggling = useRef(false);
 
   const locale = bcp47(profile?.langId ?? "spanish");
   const language = langById(profile?.langId ?? "spanish")?.label ?? "Spanish";
