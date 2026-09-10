@@ -466,6 +466,12 @@ function SimulatePage() {
     setTurns(0);
     setStage("");
     setObjective("");
+    setCrimes(0);
+    setAttempts(0);
+    setStartedAt(Date.now());
+    gateRef.current = new ReactionGate(policy);
+    cleanStreak.current = 0;
+    struggling.current = false;
     const amb = new Ambience();
     ambienceRef.current = amb;
     if (!muted) await amb.start(s.id);
