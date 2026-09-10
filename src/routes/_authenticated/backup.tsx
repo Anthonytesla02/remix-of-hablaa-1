@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ArrowLeft, Download, Loader2, Upload } from "lucide-react";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { sfx } from "@/lib/sfx";
+import { Completion } from "@/components/Completion";
 import {
   buildBackup,
   downloadBackup,
