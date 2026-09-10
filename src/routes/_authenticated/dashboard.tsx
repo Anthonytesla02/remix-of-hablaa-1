@@ -245,7 +245,7 @@ function DashboardPage() {
           if (r)
             setCelebration({
               title: "Checked in!",
-              subtitle: `+${r.points} points · ${r.streak} day streak`,
+              subtitle: `+${r.points} points · ${r.weekCount} days this week`,
             });
         }}
       />
