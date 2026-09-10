@@ -325,6 +325,19 @@ function SessionPage() {
             </p>
           )}
         </div>
+        <div className="mt-4">
+          <ShareCard
+            stats={{
+              title: lesson ? lesson.title : "Daily lesson",
+              flag: character?.flag ?? "🇪🇸",
+              seconds: (Date.now() - startedAt) / 1000,
+              accuracy,
+              crimes: Math.max(0, graded - right),
+              xp,
+              tutor: character?.name ?? "the tutor",
+            }}
+          />
+        </div>
         <Link to="/dashboard" className="hud mt-4 rounded-sm border border-border py-3.5 text-center text-xs text-muted-foreground">
           BACK TO MAP
         </Link>
