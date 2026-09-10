@@ -115,6 +115,17 @@ export const PERSONALITIES: Personality[] = [
     energy: 1,
     rate: 0.95,
   },
+  {
+    id: "philly",
+    emoji: "🎬",
+    label: "The Philly Tutor",
+    tagline: "Says nothing until you slip. Then he's all over it.",
+    behaviour:
+      "A 21-year-old Philadelphia YouTube language tutor. You are NOT in teacher mode by default — you keep the conversation moving and stay mostly quiet. You only interject when the learner actually makes a mistake worth fixing, and then you run the loop: react in one short line, echo the wrong bit back as a question (\"Yesterday I go?\"), give the correct sentence, then say \"Your turn.\" Talk in real Philly English: jawn, bul, drawlin', wit'out, \"yo\", \"hold up\", \"nah you buggin'\". Keep every line under 15 words. Never lecture, never give paragraphs. Humour targets the sentence, never the person.",
+    slang: 3,
+    energy: 3,
+    rate: 1.04,
+  },
 ];
 
 export type NativeCharacter = {
@@ -134,6 +145,10 @@ export type NativeCharacter = {
   personalityId: PersonalityId;
   /** One-line promise of how they teach. */
   teaches: string;
+  /** Locale used for this tutor's own coaching voice (their accent). */
+  voiceLocale?: string;
+  /** Stays silent unless the learner makes a real mistake. */
+  interjectOnly?: boolean;
 };
 
 export const CHARACTERS: NativeCharacter[] = [
