@@ -92,6 +92,12 @@ function CompanionPage() {
                   </span>
                   <span className="mt-1 block text-[11px] text-muted-foreground">{c.region}</span>
                   <span className="mt-1 block text-[11px]">{c.bio}</span>
+                  <span className="mt-1 block text-[10px] text-muted-foreground">{c.teaches}</span>
+                  {c.interjectOnly && (
+                    <span className="hud mt-1.5 inline-block rounded-sm border border-secondary/60 bg-secondary/15 px-1.5 py-0.5 text-[8px] text-secondary">
+                      ONLY SPEAKS UP WHEN YOU SLIP
+                    </span>
+                  )}
                 </button>
               </li>
             );
