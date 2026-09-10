@@ -396,7 +396,7 @@ function SimulatePage() {
   async function speakCharacter(text: string) {
     if (muted) return;
     ambienceRef.current?.duck(true);
-    await say(text);
+    await speak(text, locale, personality.rate, character?.voiceGender);
     ambienceRef.current?.duck(false);
   }
 
@@ -506,7 +506,7 @@ function SimulatePage() {
   /** The tutor's own voice: their accent for coaching, target voice for the phrase. */
   function coachVoice(text: string) {
     if (!text) return;
-    void speak(text, coachLocale ?? locale, 0.98);
+    void speak(text, coachLocale ?? locale, personality.rate, character?.voiceGender);
   }
 
   async function sendText(text: string) {
