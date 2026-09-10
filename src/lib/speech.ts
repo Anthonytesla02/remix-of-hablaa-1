@@ -297,6 +297,15 @@ export async function speak(
 }
 
 export function stopSpeaking() {
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch {
+      /* noop */
+    }
+    currentAudio = null;
+  }
   if (ttsSupported()) window.speechSynthesis.cancel();
   setSpeaking({ speaking: false, text: "", locale: "" });
 }
