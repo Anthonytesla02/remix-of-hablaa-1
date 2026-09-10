@@ -901,8 +901,9 @@ function SimulatePage() {
       </div>
 
       {ended ? (
-        <div className="mt-5 space-y-2">
+        <div className="mt-5 space-y-3">
           <p className="hud text-center text-[11px] text-primary">SCENE CLOSED · {turns} EXCHANGES</p>
+          <ShareCard stats={battleStats(Math.min(120, turns * 12))} />
           <button
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
