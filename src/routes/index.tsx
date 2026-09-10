@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Mic,
   MessageCircle,
@@ -93,29 +93,17 @@ const SHOTS = [
 
 function LandingPage() {
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
-
   // Signed-in visitors skip the pitch and go straight back into their course.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (data.session) void navigate({ to: "/start" });
-      else setChecking(false);
+      if (!cancelled && data.session) void navigate({ to: "/start" });
     })();
     return () => {
       cancelled = true;
     };
   }, [navigate]);
-
-  if (checking) {
-    return (
-      <div className="topo flex min-h-[100dvh] items-center justify-center">
-        <p className="bounce-soft text-sm font-extrabold text-muted-foreground">Habla</p>
-      </div>
-    );
-  }
 
   return (
     <div className="topo min-h-[100dvh]">
