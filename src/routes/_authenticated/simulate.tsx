@@ -31,6 +31,15 @@ import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
+import { ShareCard, type BattleStats } from "@/components/ShareCard";
+import {
+  ReactionGate,
+  SEVERITY_LABEL,
+  characterMoment,
+  runningJoke,
+  type Severity,
+} from "@/lib/severity";
+import { compareTranscript } from "@/lib/text-compare";
 import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
 import { courseWeeks, lessonById } from "@/lib/course";
