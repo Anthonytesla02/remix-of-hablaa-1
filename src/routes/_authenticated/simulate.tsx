@@ -31,6 +31,15 @@ import { PlayButton, useSpeaker } from "@/components/Audio";
 import { AMBIENCE_LABELS, Ambience, type AmbienceId } from "@/lib/ambience";
 import { simulateTurn, type SimReply } from "@/lib/simulate.functions";
 import { checkUtterance, type CoachVerdict } from "@/lib/coach.functions";
+import { ShareCard, type BattleStats } from "@/components/ShareCard";
+import {
+  ReactionGate,
+  SEVERITY_LABEL,
+  characterMoment,
+  runningJoke,
+  type Severity,
+} from "@/lib/severity";
+import { compareTranscript } from "@/lib/text-compare";
 import { translateUtterance } from "@/lib/translate.functions";
 import { bcp47, langById } from "@/lib/content";
 import { courseWeeks, lessonById } from "@/lib/course";
@@ -297,7 +306,16 @@ function SimulatePage() {
   const addXp = useApp((s) => s.addXp);
   const completeWeeklyRecall = useApp((s) => s.completeWeeklyRecall);
   const noteMistake = useApp((s) => s.noteMistake);
-  const { brief, character, personality, ready: hasCompanion } = useCompanion();
+  const mistakeMemory = useApp((s) => s.mistakeMemory);
+  const {
+    brief,
+    character,
+    personality,
+    policy,
+    coachLocale,
+    interjectOnly,
+    ready: hasCompanion,
+  } = useCompanion();
   const [scene, setScene] = useState<Scene | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [stage, setStage] = useState("");
@@ -314,14 +332,23 @@ function SimulatePage() {
   const [ended, setEnded] = useState(false);
   const [turns, setTurns] = useState(0);
   const [correction, setCorrection] = useState<
-    (CoachVerdict & { pending: string; history: Msg[] }) | null
+    (CoachVerdict & { pending: string; history: Msg[]; roasted: boolean; moment: string }) | null
   >(null);
+  /** Retry loop inside the correction: they must say it back before we continue. */
+  const [retryText, setRetryText] = useState("");
+  const [retryState, setRetryState] = useState<"idle" | "listening" | "ok" | "again">("idle");
   const [checking, setChecking] = useState(false);
   const [reward, setReward] = useState(0);
+  const [crimes, setCrimes] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [startedAt, setStartedAt] = useState(0);
 
   const ambienceRef = useRef<Ambience | null>(null);
   const stopListenRef = useRef<() => void>(() => {});
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const gateRef = useRef(new ReactionGate(policy));
+  const cleanStreak = useRef(0);
+  const struggling = useRef(false);
 
   const locale = bcp47(profile?.langId ?? "spanish");
   const language = langById(profile?.langId ?? "spanish")?.label ?? "Spanish";
@@ -439,6 +466,12 @@ function SimulatePage() {
     setTurns(0);
     setStage("");
     setObjective("");
+    setCrimes(0);
+    setAttempts(0);
+    setStartedAt(Date.now());
+    gateRef.current = new ReactionGate(policy);
+    cleanStreak.current = 0;
+    struggling.current = false;
     const amb = new Ambience();
     ambienceRef.current = amb;
     if (!muted) await amb.start(s.id);
@@ -470,6 +503,12 @@ function SimulatePage() {
   }
 
 
+  /** The tutor's own voice: their accent for coaching, target voice for the phrase. */
+  function coachVoice(text: string) {
+    if (!text) return;
+    void speak(text, coachLocale ?? locale, 0.98);
+  }
+
   async function sendText(text: string) {
     const clean = text.trim();
     if (!clean || thinking || checking) return;
@@ -477,7 +516,10 @@ function SimulatePage() {
     setMsgs([...history, { role: "user", text: clean }]);
     setTyped("");
     setChecking(true);
+    setAttempts((n) => n + 1);
     try {
+      const worst = Object.values(mistakeMemory).sort((a, b) => b.count - a.count)[0];
+      const joke = worst ? runningJoke(worst.tag, worst.count) : null;
       const verdict = await checkUtterance({
         data: {
           language,
@@ -486,20 +528,53 @@ function SimulatePage() {
           userText: clean,
           options: suggestions.map((s) => s.target),
           companion: brief,
+          allowRoast: gateRef.current.allowsRoast((verdictSeverityGuess(clean) ?? 2) as Severity),
+          runningJoke: joke ?? "",
         },
       });
-      if (!verdict.correct) {
-        if (verdict.tag) noteMistake(verdict.tag, verdict.why);
+
+      const severity = verdict.severity as Severity;
+      const repeat = verdict.tag ? (mistakeMemory[verdict.tag.toLowerCase().slice(0, 40)]?.count ?? 0) + 1 : 0;
+
+      // Level 0-1: never interrupt. Remember it and keep the scene flowing.
+      if (!gateRef.current.interrupts(severity)) {
+        cleanStreak.current = severity === 0 ? cleanStreak.current + 1 : 0;
+        const moment = characterMoment({
+          severity,
+          streakClean: cleanStreak.current,
+          brokeStruggle: severity === 0 && struggling.current,
+          repeatCount: 0,
+        });
+        if (severity === 0) struggling.current = false;
+        if (severity === 1 && verdict.tag) noteMistake(verdict.tag, verdict.why || verdict.fix);
+        if (moment) {
+          handlerSay(moment, severity === 0 ? "proud" : "nudge");
+          coachVoice(moment);
+        }
+        gateRef.current.record(false);
+      } else {
+        // Level 2+: stop the scene, react, correct, make them say it back.
+        cleanStreak.current = 0;
+        struggling.current = true;
+        setCrimes((n) => n + 1);
+        if (verdict.tag) noteMistake(verdict.tag, verdict.why || verdict.fix);
+        const roasted = Boolean(verdict.reaction) && gateRef.current.allowsRoast(severity);
+        gateRef.current.record(roasted);
+        const moment =
+          characterMoment({
+            severity,
+            streakClean: 0,
+            brokeStruggle: false,
+            repeatCount: repeat,
+            ...(verdict.tag ? { repeatTag: verdict.tag } : {}),
+          }) ?? "";
         setSuggestions([]);
-        setCorrection({ ...verdict, pending: clean, history });
-        handlerReact("wrong", "tough");
-        // English coaching, spoken with the target-language voice (Spanish accent).
-        void speak(
-          [verdict.why, verdict.fix, verdict.better ? `Say instead: ${verdict.better}` : ""]
-            .filter(Boolean)
-            .join(" "),
-          locale,
-          0.95,
+        setRetryText("");
+        setRetryState("idle");
+        setCorrection({ ...verdict, pending: clean, history, roasted, moment });
+        handlerReact("wrong", severity >= 3 ? "tough" : "nudge");
+        coachVoice(
+          [moment, verdict.reaction, verdict.why, verdict.fix].filter(Boolean).join(" "),
         );
         return;
       }
@@ -511,11 +586,72 @@ function SimulatePage() {
     void advance(clean, history);
   }
 
+  /** Bragging-rights summary of the run. */
+  function battleStats(xp: number): BattleStats {
+    return {
+      title: scene?.label ?? "Conversation",
+      flag: character?.flag ?? "🇪🇸",
+      seconds: startedAt ? (Date.now() - startedAt) / 1000 : 0,
+      accuracy: attempts ? Math.max(0, (attempts - crimes) / attempts) : 1,
+      crimes,
+      xp,
+      tutor: character?.name ?? "the tutor",
+    };
+  }
+
+  /** Rough pre-guess so roast pacing can be decided before the model answers. */
+  function verdictSeverityGuess(text: string) {
+    return text.split(/\s+/).length <= 2 ? 2 : 3;
+  }
+
+  /** They repeated the corrected line — check it, then resume the scene. */
+  function submitRetry(said: string) {
+    const c = correction;
+    if (!c) return;
+    const target = c.retry || c.better;
+    const { overlap } = compareTranscript(said, target);
+    if (overlap >= 0.6) {
+      sfx("correct");
+      setRetryState("ok");
+      const praise = gateRef.current.encourages ? "There it is. Say less." : "";
+      if (praise) {
+        handlerSay(praise, "proud");
+        coachVoice(praise);
+      }
+      setTimeout(() => closeCorrection(), 900);
+    } else {
+      sfx("wrong");
+      setRetryState("again");
+      coachVoice("Nah, one more time. Say it back.");
+    }
+  }
+
+  function retryByVoice() {
+    if (retryState === "listening") {
+      stopListenRef.current();
+      setRetryState("idle");
+      return;
+    }
+    setRetryState("listening");
+    sfx("record");
+    stopListenRef.current = listenContinuous(locale, {
+      onFinal: (t) => {
+        setRetryText(t.trim());
+        setRetryState("idle");
+        if (t.trim()) submitRetry(t.trim());
+      },
+      onError: () => setRetryState("idle"),
+    });
+  }
+
   function closeCorrection() {
     const c = correction;
     setCorrection(null);
+    setRetryState("idle");
+    setRetryText("");
     stopSpeaking();
-    if (c) void advance(c.pending, c.history);
+    // The scene continues from the CORRECT line, so the learner hears it land.
+    if (c) void advance(c.retry || c.better || c.pending, c.history);
   }
 
   function record() {
@@ -778,8 +914,9 @@ function SimulatePage() {
       </div>
 
       {ended ? (
-        <div className="mt-5 space-y-2">
+        <div className="mt-5 space-y-3">
           <p className="hud text-center text-[11px] text-primary">SCENE CLOSED · {turns} EXCHANGES</p>
+          <ShareCard stats={battleStats(Math.min(120, turns * 12))} />
           <button
             onClick={() => leave(true)}
             className="hud w-full rounded-sm bg-primary py-3.5 text-xs text-primary-foreground"
@@ -901,10 +1038,31 @@ function SimulatePage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm sm:items-center">
           <div className="w-full max-w-md rounded-sm border border-destructive/60 bg-card p-4 shadow-lg">
             <p className="hud flex items-center gap-1.5 text-[10px] text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" /> TRANSLESSON ERROR
+              <AlertTriangle className="h-3.5 w-3.5" />{" "}
+              {SEVERITY_LABEL[correction.severity as Severity]}
             </p>
-            <p className="mt-2 text-[11px] text-muted-foreground">You said</p>
+
+            {(correction.moment || correction.reaction) && (
+              <div className="mt-2 flex items-start gap-2 rounded-sm border border-border bg-muted/40 p-2.5">
+                {character && (
+                  <img
+                    src={character.avatar}
+                    alt={character.name}
+                    width={512}
+                    height={512}
+                    loading="lazy"
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                )}
+                <p className="text-[13px] leading-snug">
+                  {[correction.moment, correction.reaction].filter(Boolean).join(" ")}
+                </p>
+              </div>
+            )}
+
+            <p className="mt-3 text-[11px] text-muted-foreground">You said</p>
             <p className="text-sm">{correction.pending}</p>
+
 
             {correction.why && (
               <>
@@ -933,11 +1091,58 @@ function SimulatePage() {
               </div>
             )}
 
+            {(correction.retry || correction.better) && (
+              <div className="mt-3 rounded-sm border border-secondary/50 bg-secondary/5 p-2.5">
+                <p className="hud text-[9px] text-secondary">YOUR TURN · SAY IT BACK</p>
+                {retryState === "again" && (
+                  <p className="mt-1 text-[11px] text-destructive">Not quite — one more time.</p>
+                )}
+                {retryState === "ok" && (
+                  <p className="mt-1 text-[11px] text-primary">That's it. Back to the scene…</p>
+                )}
+                <div className="mt-2 flex gap-2">
+                  {sttSupported() && (
+                    <button
+                      onClick={retryByVoice}
+                      className={`hud flex-1 rounded-sm border py-2.5 text-[10px] ${
+                        retryState === "listening"
+                          ? "mic-live border-secondary text-secondary"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {retryState === "listening" ? (
+                        <>
+                          <Square className="mr-1 inline h-3 w-3" /> STOP
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="mr-1 inline h-3 w-3" /> REPEAT IT
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => submitRetry(retryText)}
+                    disabled={!retryText.trim()}
+                    className="hud flex-1 rounded-sm bg-primary py-2.5 text-[10px] text-primary-foreground disabled:opacity-40"
+                  >
+                    <Send className="mr-1 inline h-3 w-3" /> CHECK
+                  </button>
+                </div>
+                <input
+                  value={retryText}
+                  onChange={(e) => setRetryText(e.target.value)}
+                  placeholder="…or type it back"
+                  className="mt-2 w-full rounded-sm border border-input bg-card px-3 py-2 text-sm outline-none focus:border-secondary"
+                />
+              </div>
+            )}
+
             <button
               onClick={closeCorrection}
-              className="hud mt-4 w-full rounded-sm bg-primary py-3 text-xs text-primary-foreground"
+              className="hud mt-4 w-full rounded-sm border border-border py-3 text-[11px] text-muted-foreground"
             >
-              GOT IT · CONTINUE
+              {correction.retry || correction.better ? "SKIP · CONTINUE" : "GOT IT · CONTINUE"}
             </button>
           </div>
         </div>

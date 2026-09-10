@@ -13,6 +13,8 @@ import {
 } from "@/lib/course";
 import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
 import { Completion } from "@/components/Completion";
+import { ShareCard } from "@/components/ShareCard";
+import { useCompanion } from "@/lib/use-companion";
 import { sfx } from "@/lib/sfx";
 import { courseLessons } from "@/lib/course";
 import { stopSpeaking } from "@/lib/speech";
@@ -53,6 +55,7 @@ function SessionPage() {
   const seedCards = useApp((s) => s.seedCards);
   const reviewCard = useApp((s) => s.reviewCard);
   const completeSession = useApp((s) => s.completeSession);
+  const { character } = useCompanion();
 
   const [index, setIndex] = useState(0);
   const [xp, setXp] = useState(0);
@@ -321,6 +324,19 @@ function SessionPage() {
                 : "STARTING IT AGAIN…"}
             </p>
           )}
+        </div>
+        <div className="mt-4">
+          <ShareCard
+            stats={{
+              title: lesson ? lesson.title : "Daily lesson",
+              flag: character?.flag ?? "🇪🇸",
+              seconds: (Date.now() - startedAt) / 1000,
+              accuracy,
+              crimes: Math.max(0, graded - right),
+              xp,
+              tutor: character?.name ?? "the tutor",
+            }}
+          />
         </div>
         <Link to="/dashboard" className="hud mt-4 rounded-sm border border-border py-3.5 text-center text-xs text-muted-foreground">
           BACK TO MAP

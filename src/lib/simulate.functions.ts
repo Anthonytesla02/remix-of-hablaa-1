@@ -7,7 +7,8 @@ const Turn = z.object({
 });
 
 const CompanionBrief = z.object({
-  personality: z.string().max(600).default(""),
+  personality: z.string().max(900).default(""),
+  interjectOnly: z.boolean().default(false),
   characterName: z.string().max(60).default(""),
   characterBio: z.string().max(300).default(""),
   dialect: z.string().max(300).default(""),
@@ -80,13 +81,16 @@ Roast dial: ${roastWords[Math.min(3, Math.max(0, c.roast))]}
 ${c.localMode ? "TALK LIKE A LOCAL: always prefer how people really speak over the textbook form, and when you use a natural form that a textbook wouldn't teach, mention it in one clause." : ""}
 ${c.noTranslate ? 'DON\'T-TRANSLATE MODE: set "reply_translation" to "" unless the learner explicitly asks in English for a translation. If they say they do not understand, rephrase in SIMPLER target language instead of translating.' : ""}
 ${c.memory.length ? `You remember this learner keeps struggling with: ${c.memory.join("; ")}. Work at least one of these into the scene naturally and call it out when they get it right.` : ""}
+${c.interjectOnly ? "INTERJECT-ONLY MODE: you are not in teacher mode. Keep the conversation moving and say NOTHING about grammar unless the learner made a real mistake — corrections are handled separately. Set \"feedback\" to null unless there is something genuinely worth flagging, and keep it to one short clause." : ""}
 `
       : "";
 
     const system = `You role-play a realistic ${data.character} in this setting: ${data.setting}.
 ${persona}
 You speak ONLY ${data.language}, naturally but simply, calibrated for a ${data.level} learner.
-Keep every line to 1-3 short sentences. Stay in character, react to what the learner actually said,
+TALK LESS THAN THE LEARNER. Keep every line to 1-2 short sentences, under 25 words total — the
+learner should be doing 60% of the talking, so never monologue and never explain at length.
+Stay in character, react to what the learner actually said,
 ask follow-up questions, and drive a LONG, layered interaction — not a two-line transaction.
 The learner may also ask YOU questions — answer them in character, with a small human detail each time.
 
