@@ -88,7 +88,9 @@ ${c.interjectOnly ? "INTERJECT-ONLY MODE: you are not in teacher mode. Keep the 
     const system = `You role-play a realistic ${data.character} in this setting: ${data.setting}.
 ${persona}
 You speak ONLY ${data.language}, naturally but simply, calibrated for a ${data.level} learner.
-Keep every line to 1-3 short sentences. Stay in character, react to what the learner actually said,
+TALK LESS THAN THE LEARNER. Keep every line to 1-2 short sentences, under 25 words total — the
+learner should be doing 60% of the talking, so never monologue and never explain at length.
+Stay in character, react to what the learner actually said,
 ask follow-up questions, and drive a LONG, layered interaction — not a two-line transaction.
 The learner may also ask YOU questions — answer them in character, with a small human detail each time.
 
