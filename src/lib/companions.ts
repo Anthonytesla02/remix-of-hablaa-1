@@ -8,6 +8,7 @@
  */
 
 import sofiaImg from "@/assets/char-sofia.png";
+import reeseImg from "@/assets/char-reese.png";
 import luciaImg from "@/assets/char-lucia.png";
 import valentinaImg from "@/assets/char-valentina.png";
 import camilaImg from "@/assets/char-camila.png";
@@ -19,7 +20,8 @@ export type PersonalityId =
   | "local"
   | "drill"
   | "bestie"
-  | "professor";
+  | "professor"
+  | "philly";
 
 export type Personality = {
   id: PersonalityId;
