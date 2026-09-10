@@ -136,14 +136,96 @@ function setSpeaking(next: SpeakingState) {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/* ---------------------------------------------------------------- *
+ * Neural voices. Device voice lists rarely contain a real male       *
+ * Spanish voice, so tutors with a gender preference are spoken by    *
+ * the server TTS voice instead, with the browser engine as fallback. *
+ * ---------------------------------------------------------------- */
+
+const NEURAL_VOICE = { male: "ash", female: "shimmer" } as const;
+const audioCache = new Map<string, string>();
+let currentAudio: HTMLAudioElement | null = null;
+let neuralBroken = false;
+
+async function speakNeural(
+  text: string,
+  locale: string,
+  rate: number,
+  gender: "male" | "female",
+): Promise<boolean> {
+  if (neuralBroken || typeof window === "undefined") return false;
+  const voice = NEURAL_VOICE[gender];
+  const key = `${voice}|${rate}|${locale}|${text}`;
+  try {
+    let url = audioCache.get(key);
+    if (!url) {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          voice,
+          speed: rate,
+          instructions:
+            gender === "male"
+              ? "Young man in his early twenties, relaxed and friendly, natural conversational pace."
+              : "Warm, friendly young woman, natural conversational pace.",
+        }),
+      });
+      if (!res.ok) {
+        if (res.status === 503 || res.status === 404) neuralBroken = true;
+        return false;
+      }
+      const blob = await res.blob();
+      if (blob.size < 512) return false;
+      url = URL.createObjectURL(blob);
+      if (audioCache.size > 60) {
+        const oldest = audioCache.keys().next().value;
+        if (oldest) {
+          URL.revokeObjectURL(audioCache.get(oldest)!);
+          audioCache.delete(oldest);
+        }
+      }
+      audioCache.set(key, url);
+    }
+
+    stopSpeaking();
+    setSpeaking({ speaking: true, text, locale });
+    const audio = new Audio(url);
+    currentAudio = audio;
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      audio.onended = done;
+      audio.onerror = done;
+      audio.play().catch(done);
+    });
+    currentAudio = null;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function speak(
   text: string,
   locale: string,
   rate = 1,
   preferredGender?: "male" | "female",
 ): Promise<void> {
-  if (!ttsSupported() || !text) return;
+  if (!text) return;
+  if (preferredGender) {
+    const ok = await speakNeural(text, locale, rate, preferredGender);
+    setSpeaking({ speaking: false, text: "", locale: "" });
+    if (ok) return;
+  }
+  if (!ttsSupported()) return;
   const synth = window.speechSynthesis;
+
   try {
     await voicesReady();
     setSpeaking({ speaking: true, text, locale });
