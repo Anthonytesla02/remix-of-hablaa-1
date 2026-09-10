@@ -13,6 +13,8 @@ import {
 } from "@/lib/course";
 import { buildLessonSession, buildSession, stepLabel, type Step } from "@/lib/session";
 import { Completion } from "@/components/Completion";
+import { ShareCard } from "@/components/ShareCard";
+import { useCompanion } from "@/lib/use-companion";
 import { sfx } from "@/lib/sfx";
 import { courseLessons } from "@/lib/course";
 import { stopSpeaking } from "@/lib/speech";
