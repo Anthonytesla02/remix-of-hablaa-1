@@ -497,6 +497,12 @@ function SimulatePage() {
   }
 
 
+  /** The tutor's own voice: their accent for coaching, target voice for the phrase. */
+  function coachVoice(text: string) {
+    if (!text) return;
+    void speak(text, coachLocale ?? locale, 0.98);
+  }
+
   async function sendText(text: string) {
     const clean = text.trim();
     if (!clean || thinking || checking) return;
@@ -504,7 +510,10 @@ function SimulatePage() {
     setMsgs([...history, { role: "user", text: clean }]);
     setTyped("");
     setChecking(true);
+    setAttempts((n) => n + 1);
     try {
+      const worst = Object.values(mistakeMemory).sort((a, b) => b.count - a.count)[0];
+      const joke = worst ? runningJoke(worst.tag, worst.count) : null;
       const verdict = await checkUtterance({
         data: {
           language,
@@ -513,20 +522,53 @@ function SimulatePage() {
           userText: clean,
           options: suggestions.map((s) => s.target),
           companion: brief,
+          allowRoast: gateRef.current.allowsRoast((verdictSeverityGuess(clean) ?? 2) as Severity),
+          runningJoke: joke ?? "",
         },
       });
-      if (!verdict.correct) {
-        if (verdict.tag) noteMistake(verdict.tag, verdict.why);
+
+      const severity = verdict.severity as Severity;
+      const repeat = verdict.tag ? (mistakeMemory[verdict.tag.toLowerCase().slice(0, 40)]?.count ?? 0) + 1 : 0;
+
+      // Level 0-1: never interrupt. Remember it and keep the scene flowing.
+      if (!gateRef.current.interrupts(severity)) {
+        cleanStreak.current = severity === 0 ? cleanStreak.current + 1 : 0;
+        const moment = characterMoment({
+          severity,
+          streakClean: cleanStreak.current,
+          brokeStruggle: severity === 0 && struggling.current,
+          repeatCount: 0,
+        });
+        if (severity === 0) struggling.current = false;
+        if (severity === 1 && verdict.tag) noteMistake(verdict.tag, verdict.why || verdict.fix);
+        if (moment) {
+          handlerSay(moment, severity === 0 ? "proud" : "nudge");
+          coachVoice(moment);
+        }
+        gateRef.current.record(false);
+      } else {
+        // Level 2+: stop the scene, react, correct, make them say it back.
+        cleanStreak.current = 0;
+        struggling.current = true;
+        setCrimes((n) => n + 1);
+        if (verdict.tag) noteMistake(verdict.tag, verdict.why || verdict.fix);
+        const roasted = Boolean(verdict.reaction) && gateRef.current.allowsRoast(severity);
+        gateRef.current.record(roasted);
+        const moment =
+          characterMoment({
+            severity,
+            streakClean: 0,
+            brokeStruggle: false,
+            repeatCount: repeat,
+            ...(verdict.tag ? { repeatTag: verdict.tag } : {}),
+          }) ?? "";
         setSuggestions([]);
-        setCorrection({ ...verdict, pending: clean, history });
-        handlerReact("wrong", "tough");
-        // English coaching, spoken with the target-language voice (Spanish accent).
-        void speak(
-          [verdict.why, verdict.fix, verdict.better ? `Say instead: ${verdict.better}` : ""]
-            .filter(Boolean)
-            .join(" "),
-          locale,
-          0.95,
+        setRetryText("");
+        setRetryState("idle");
+        setCorrection({ ...verdict, pending: clean, history, roasted, moment });
+        handlerReact("wrong", severity >= 3 ? "tough" : "nudge");
+        coachVoice(
+          [moment, verdict.reaction, verdict.why, verdict.fix].filter(Boolean).join(" "),
         );
         return;
       }
@@ -538,11 +580,59 @@ function SimulatePage() {
     void advance(clean, history);
   }
 
+  /** Rough pre-guess so roast pacing can be decided before the model answers. */
+  function verdictSeverityGuess(text: string) {
+    return text.split(/\s+/).length <= 2 ? 2 : 3;
+  }
+
+  /** They repeated the corrected line — check it, then resume the scene. */
+  function submitRetry(said: string) {
+    const c = correction;
+    if (!c) return;
+    const target = c.retry || c.better;
+    const { overlap } = compareTranscript(said, target);
+    if (overlap >= 0.6) {
+      sfx("correct");
+      setRetryState("ok");
+      const praise = gateRef.current.encourages ? "There it is. Say less." : "";
+      if (praise) {
+        handlerSay(praise, "proud");
+        coachVoice(praise);
+      }
+      setTimeout(() => closeCorrection(), 900);
+    } else {
+      sfx("wrong");
+      setRetryState("again");
+      coachVoice("Nah, one more time. Say it back.");
+    }
+  }
+
+  function retryByVoice() {
+    if (retryState === "listening") {
+      stopListenRef.current();
+      setRetryState("idle");
+      return;
+    }
+    setRetryState("listening");
+    sfx("record");
+    stopListenRef.current = listenContinuous(locale, {
+      onFinal: (t) => {
+        setRetryText(t.trim());
+        setRetryState("idle");
+        if (t.trim()) submitRetry(t.trim());
+      },
+      onError: () => setRetryState("idle"),
+    });
+  }
+
   function closeCorrection() {
     const c = correction;
     setCorrection(null);
+    setRetryState("idle");
+    setRetryText("");
     stopSpeaking();
-    if (c) void advance(c.pending, c.history);
+    // The scene continues from the CORRECT line, so the learner hears it land.
+    if (c) void advance(c.retry || c.better || c.pending, c.history);
   }
 
   function record() {
