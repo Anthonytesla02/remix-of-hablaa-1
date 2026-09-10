@@ -1038,10 +1038,31 @@ function SimulatePage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-4 backdrop-blur-sm sm:items-center">
           <div className="w-full max-w-md rounded-sm border border-destructive/60 bg-card p-4 shadow-lg">
             <p className="hud flex items-center gap-1.5 text-[10px] text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5" /> TRANSLESSON ERROR
+              <AlertTriangle className="h-3.5 w-3.5" />{" "}
+              {SEVERITY_LABEL[correction.severity as Severity]}
             </p>
-            <p className="mt-2 text-[11px] text-muted-foreground">You said</p>
+
+            {(correction.moment || correction.reaction) && (
+              <div className="mt-2 flex items-start gap-2 rounded-sm border border-border bg-muted/40 p-2.5">
+                {character && (
+                  <img
+                    src={character.avatar}
+                    alt={character.name}
+                    width={512}
+                    height={512}
+                    loading="lazy"
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                )}
+                <p className="text-[13px] leading-snug">
+                  {[correction.moment, correction.reaction].filter(Boolean).join(" ")}
+                </p>
+              </div>
+            )}
+
+            <p className="mt-3 text-[11px] text-muted-foreground">You said</p>
             <p className="text-sm">{correction.pending}</p>
+
 
             {correction.why && (
               <>
