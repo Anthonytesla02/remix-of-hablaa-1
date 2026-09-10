@@ -55,6 +55,7 @@ function SessionPage() {
   const seedCards = useApp((s) => s.seedCards);
   const reviewCard = useApp((s) => s.reviewCard);
   const completeSession = useApp((s) => s.completeSession);
+  const { character } = useCompanion();
 
   const [index, setIndex] = useState(0);
   const [xp, setXp] = useState(0);
