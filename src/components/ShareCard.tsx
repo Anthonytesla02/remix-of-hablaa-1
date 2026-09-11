@@ -43,8 +43,40 @@ export function shareText(st: BattleStats) {
 /** End-of-run stat card the learner can brag with. */
 export function ShareCard({ stats }: { stats: BattleStats }) {
   const [copied, setCopied] = useState(false);
+  const [posted, setPosted] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const callsign = useApp((s) => s.profile?.callsign ?? "Learner");
   const v = VERDICTS.find((x) => stats.accuracy >= x.min)!;
   const text = shareText(stats);
+
+  async function post() {
+    sfx("tap");
+    setPosting(true);
+    try {
+      await createPost({
+        kind: "simulation",
+        callsign,
+        body: `${v.tag} — up against ${stats.tutor}.`,
+        stats: {
+          flag: stats.flag,
+          title: stats.title,
+          seconds: Math.round(stats.seconds),
+          accuracy: stats.accuracy,
+          crimes: stats.crimes,
+          xp: stats.xp,
+          tutor: stats.tutor,
+        },
+      });
+      setPosted(true);
+      sfx("complete");
+      toast.success("Posted to the community feed");
+    } catch {
+      toast.error("Could not post right now");
+    } finally {
+      setPosting(false);
+    }
+  }
+
 
   async function share() {
     sfx("tap");
