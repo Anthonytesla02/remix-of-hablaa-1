@@ -9,8 +9,11 @@ import {
   Music,
   ShoppingBag,
   Trophy,
+  Users,
   Volume2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { createPost } from "@/lib/feed";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
 import { useApp, useLevel } from "@/lib/store";
@@ -58,6 +61,7 @@ function ProfilePage() {
   const tutorMuted = useHandler((s) => s.muted);
   const toggleTutorMute = useHandler((s) => s.toggleMute);
   const [soundOff, setSoundOff] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => setSoundOff(sfxMuted()), []);
   useEffect(() => {
@@ -68,6 +72,34 @@ function ProfilePage() {
   const lang = langById(profile.langId);
   const focus = onboarding.operational_personas.find((p) => p.id === profile.personaId);
   const allBadges = gamification.badges as { id: string; label: string; unlock_condition: string }[];
+
+  async function postStreak() {
+    sfx("tap");
+    setPosting(true);
+    try {
+      await createPost({
+        kind: "streak",
+        callsign: profile?.callsign ?? "Learner",
+        body: `${streak} days in a row with ${character?.name ?? "my tutor"}.`,
+        stats: {
+          flag: lang?.flag_emoji ?? "🇪🇸",
+          title: `${lang?.label ?? "Spanish"} streak`,
+          streak,
+          longest,
+          xp,
+          level: level.current.codename,
+        },
+      });
+      sfx("complete");
+      toast.success("Posted to the community feed");
+      void navigate({ to: "/feed" });
+    } catch {
+      toast.error("Could not post right now");
+    } finally {
+      setPosting(false);
+    }
+  }
+
 
   return (
     <AppFrame>
@@ -96,6 +128,22 @@ function ProfilePage() {
           <Stat label="Coins" value={String(credits)} />
         </div>
         <p className="mt-3 text-xs">{level.current.can_do_summary}</p>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => void postStreak()}
+            disabled={posting}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-2.5 text-[11px] font-extrabold text-primary-foreground disabled:opacity-60"
+          >
+            <Users className="h-3.5 w-3.5" /> {posting ? "Posting…" : "Post my streak"}
+          </button>
+          <Link
+            to="/feed"
+            onClick={() => sfx("tap")}
+            className="flex items-center justify-center rounded-2xl border-2 border-border px-3 text-[11px] font-extrabold text-muted-foreground"
+          >
+            See feed
+          </Link>
+        </div>
       </section>
 
       <Link
@@ -148,6 +196,7 @@ function ProfilePage() {
         <p className="text-[11px] font-extrabold text-muted-foreground">Shortcuts</p>
         <div className="mt-2 grid grid-cols-3 gap-2">
           <Shortcut to="/vault" icon={Dumbbell} label="Practice" />
+          <Shortcut to="/feed" icon={Users} label="Feed" />
           <Shortcut to="/league" icon={Trophy} label="League" />
           <Shortcut to="/shop" icon={ShoppingBag} label="Shop" />
         </div>
@@ -297,7 +346,7 @@ function Shortcut({
   icon: Icon,
   label,
 }: {
-  to: "/vault" | "/league" | "/shop";
+  to: "/vault" | "/league" | "/shop" | "/feed";
   icon: typeof Dumbbell;
   label: string;
 }) {

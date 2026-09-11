@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StartRouteImport } from './routes/start'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -50,6 +51,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/feed': typeof FeedRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/feed': typeof FeedRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/feed': typeof FeedRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/cookies'
+    | '/feed'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/cookies'
+    | '/feed'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/cookies'
+    | '/feed'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -244,6 +256,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  FeedRoute: typeof FeedRoute
   PrivacyRoute: typeof PrivacyRoute
   StartRoute: typeof StartRoute
   TermsRoute: typeof TermsRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  FeedRoute: FeedRoute,
   PrivacyRoute: PrivacyRoute,
   StartRoute: StartRoute,
   TermsRoute: TermsRoute,

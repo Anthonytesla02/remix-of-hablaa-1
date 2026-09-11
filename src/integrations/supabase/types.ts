@@ -32,6 +32,39 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_posts: {
+        Row: {
+          body: string
+          callsign: string
+          created_at: string
+          id: string
+          kind: string
+          stats: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          callsign?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          stats?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          callsign?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          stats?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           badges: string[]

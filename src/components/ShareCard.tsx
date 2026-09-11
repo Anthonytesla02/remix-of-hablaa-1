@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Share2, Copy, Check } from "lucide-react";
+import { Share2, Copy, Check, Users } from "lucide-react";
+import { toast } from "sonner";
 import { sfx } from "@/lib/sfx";
+import { createPost } from "@/lib/feed";
+import { useApp } from "@/lib/store";
 
 export type BattleStats = {
   title: string;
@@ -40,8 +43,40 @@ export function shareText(st: BattleStats) {
 /** End-of-run stat card the learner can brag with. */
 export function ShareCard({ stats }: { stats: BattleStats }) {
   const [copied, setCopied] = useState(false);
+  const [posted, setPosted] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const callsign = useApp((s) => s.profile?.callsign ?? "Learner");
   const v = VERDICTS.find((x) => stats.accuracy >= x.min)!;
   const text = shareText(stats);
+
+  async function post() {
+    sfx("tap");
+    setPosting(true);
+    try {
+      await createPost({
+        kind: "simulation",
+        callsign,
+        body: `${v.tag} — up against ${stats.tutor}.`,
+        stats: {
+          flag: stats.flag,
+          title: stats.title,
+          seconds: Math.round(stats.seconds),
+          accuracy: stats.accuracy,
+          crimes: stats.crimes,
+          xp: stats.xp,
+          tutor: stats.tutor,
+        },
+      });
+      setPosted(true);
+      sfx("complete");
+      toast.success("Posted to the community feed");
+    } catch {
+      toast.error("Could not post right now");
+    } finally {
+      setPosting(false);
+    }
+  }
+
 
   async function share() {
     sfx("tap");
@@ -101,6 +136,14 @@ export function ShareCard({ stats }: { stats: BattleStats }) {
             <Share2 className="h-3.5 w-3.5" /> SHARE MY RESULT
           </>
         )}
+      </button>
+      <button
+        onClick={() => void post()}
+        disabled={posting || posted}
+        className="hud mt-2 flex w-full items-center justify-center gap-1.5 rounded-sm border border-secondary bg-secondary/10 py-2.5 text-[10px] text-secondary disabled:opacity-60"
+      >
+        <Users className="h-3.5 w-3.5" />{" "}
+        {posted ? "POSTED TO THE FEED" : posting ? "POSTING…" : "POST TO COMMUNITY FEED"}
       </button>
       {!copied && (
         <p className="hud mt-1.5 flex items-center justify-center gap-1 text-[8px] text-muted-foreground">
