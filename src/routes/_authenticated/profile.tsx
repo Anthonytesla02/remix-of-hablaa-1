@@ -297,7 +297,7 @@ function Shortcut({
   icon: Icon,
   label,
 }: {
-  to: "/vault" | "/league" | "/shop";
+  to: "/vault" | "/league" | "/shop" | "/feed";
   icon: typeof Dumbbell;
   label: string;
 }) {
