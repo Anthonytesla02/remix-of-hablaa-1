@@ -96,6 +96,22 @@ function ProfilePage() {
           <Stat label="Coins" value={String(credits)} />
         </div>
         <p className="mt-3 text-xs">{level.current.can_do_summary}</p>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => void postStreak()}
+            disabled={posting}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-2.5 text-[11px] font-extrabold text-primary-foreground disabled:opacity-60"
+          >
+            <Users className="h-3.5 w-3.5" /> {posting ? "Posting…" : "Post my streak"}
+          </button>
+          <Link
+            to="/feed"
+            onClick={() => sfx("tap")}
+            className="flex items-center justify-center rounded-2xl border-2 border-border px-3 text-[11px] font-extrabold text-muted-foreground"
+          >
+            See feed
+          </Link>
+        </div>
       </section>
 
       <Link
