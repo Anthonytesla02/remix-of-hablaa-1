@@ -137,6 +137,14 @@ export function ShareCard({ stats }: { stats: BattleStats }) {
           </>
         )}
       </button>
+      <button
+        onClick={() => void post()}
+        disabled={posting || posted}
+        className="hud mt-2 flex w-full items-center justify-center gap-1.5 rounded-sm border border-secondary bg-secondary/10 py-2.5 text-[10px] text-secondary disabled:opacity-60"
+      >
+        <Users className="h-3.5 w-3.5" />{" "}
+        {posted ? "POSTED TO THE FEED" : posting ? "POSTING…" : "POST TO COMMUNITY FEED"}
+      </button>
       {!copied && (
         <p className="hud mt-1.5 flex items-center justify-center gap-1 text-[8px] text-muted-foreground">
           <Copy className="h-2.5 w-2.5" /> COPIES TO YOUR CLIPBOARD IF SHARING ISN’T AVAILABLE
