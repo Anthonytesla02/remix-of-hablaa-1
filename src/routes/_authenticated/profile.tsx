@@ -70,6 +70,34 @@ function ProfilePage() {
   const focus = onboarding.operational_personas.find((p) => p.id === profile.personaId);
   const allBadges = gamification.badges as { id: string; label: string; unlock_condition: string }[];
 
+  async function postStreak() {
+    sfx("tap");
+    setPosting(true);
+    try {
+      await createPost({
+        kind: "streak",
+        callsign: profile?.callsign ?? "Learner",
+        body: `${streak} days in a row with ${character?.name ?? "my tutor"}.`,
+        stats: {
+          flag: lang?.flag_emoji ?? "🇪🇸",
+          title: `${lang?.label ?? "Spanish"} streak`,
+          streak,
+          longest,
+          xp,
+          level: level.current.codename,
+        },
+      });
+      sfx("complete");
+      toast.success("Posted to the community feed");
+      void navigate({ to: "/feed" });
+    } catch {
+      toast.error("Could not post right now");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+
   return (
     <AppFrame>
       <section className="paper-card p-4">
