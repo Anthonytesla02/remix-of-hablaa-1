@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Share2, Copy, Check } from "lucide-react";
+import { Share2, Copy, Check, Users } from "lucide-react";
+import { toast } from "sonner";
 import { sfx } from "@/lib/sfx";
+import { createPost } from "@/lib/feed";
+import { useApp } from "@/lib/store";
 
 export type BattleStats = {
   title: string;
