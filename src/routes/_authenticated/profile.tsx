@@ -58,6 +58,7 @@ function ProfilePage() {
   const tutorMuted = useHandler((s) => s.muted);
   const toggleTutorMute = useHandler((s) => s.toggleMute);
   const [soundOff, setSoundOff] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => setSoundOff(sfxMuted()), []);
   useEffect(() => {
