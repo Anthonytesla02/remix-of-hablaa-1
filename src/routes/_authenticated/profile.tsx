@@ -9,8 +9,11 @@ import {
   Music,
   ShoppingBag,
   Trophy,
+  Users,
   Volume2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { createPost } from "@/lib/feed";
 import { AppFrame, Hydrated } from "@/components/AppFrame";
 import { gamification, langById, onboarding } from "@/lib/content";
 import { useApp, useLevel } from "@/lib/store";
