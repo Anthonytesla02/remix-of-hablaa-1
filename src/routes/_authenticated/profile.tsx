@@ -148,6 +148,7 @@ function ProfilePage() {
         <p className="text-[11px] font-extrabold text-muted-foreground">Shortcuts</p>
         <div className="mt-2 grid grid-cols-3 gap-2">
           <Shortcut to="/vault" icon={Dumbbell} label="Practice" />
+          <Shortcut to="/feed" icon={Users} label="Feed" />
           <Shortcut to="/league" icon={Trophy} label="League" />
           <Shortcut to="/shop" icon={ShoppingBag} label="Shop" />
         </div>
