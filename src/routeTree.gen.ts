@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as IntroductionRouteImport } from './routes/introduction'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StartRouteImport } from './routes/start'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -56,6 +57,11 @@ const CookiesRoute = CookiesRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntroductionRoute = IntroductionRouteImport.update({
+  id: '/introduction',
+  path: '/introduction',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/feed': typeof FeedRoute
+  '/introduction': typeof IntroductionRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/feed': typeof FeedRoute
+  '/introduction': typeof IntroductionRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/feed': typeof FeedRoute
+  '/introduction': typeof IntroductionRoute
   '/privacy': typeof PrivacyRoute
   '/start': typeof StartRoute
   '/terms': typeof TermsRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/feed'
+    | '/introduction'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/feed'
+    | '/introduction'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/feed'
+    | '/introduction'
     | '/privacy'
     | '/start'
     | '/terms'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   FeedRoute: typeof FeedRoute
+  IntroductionRoute: typeof IntroductionRoute
   PrivacyRoute: typeof PrivacyRoute
   StartRoute: typeof StartRoute
   TermsRoute: typeof TermsRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/introduction': {
+      id: '/introduction'
+      path: '/introduction'
+      fullPath: '/introduction'
+      preLoaderRoute: typeof IntroductionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -435,6 +455,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   FeedRoute: FeedRoute,
+  IntroductionRoute: IntroductionRoute,
   PrivacyRoute: PrivacyRoute,
   StartRoute: StartRoute,
   TermsRoute: TermsRoute,
