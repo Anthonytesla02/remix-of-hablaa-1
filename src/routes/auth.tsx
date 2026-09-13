@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import llamaAvatar from "@/assets/habla-llama.png";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,9 @@ import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: z.object({
+    view: z.enum(["signup", "signin"]).optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Create Your Habla Account" },
@@ -31,7 +35,8 @@ type AuthView = "welcome" | "signin" | "signup";
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [view, setView] = useState<AuthView>("welcome");
+  const search = Route.useSearch();
+  const [view, setView] = useState<AuthView>(search.view ?? "welcome");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -138,7 +143,7 @@ function AuthPage() {
           <div className="space-y-3">
             <Button
               type="button"
-              onClick={() => openForm("signup")}
+              onClick={() => void navigate({ to: "/introduction" })}
               className="btn-3d h-14 w-full rounded-2xl text-sm font-black uppercase"
             >
               Get started
