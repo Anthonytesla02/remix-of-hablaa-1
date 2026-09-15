@@ -69,8 +69,10 @@ export async function syncFromCloud(userId: string): Promise<void> {
         timelineId: profileRow.timeline_id,
         tierId: profileRow.tier_id,
         personaId: profileRow.persona_id,
-        discoverySource: store.profile?.discoverySource,
-        startingLevel: store.profile?.startingLevel,
+        ...(store.profile?.discoverySource
+          ? { discoverySource: store.profile.discoverySource }
+          : {}),
+        ...(store.profile?.startingLevel ? { startingLevel: store.profile.startingLevel } : {}),
         startedAt: profileRow.started_at,
       },
       xp: profileRow.xp,

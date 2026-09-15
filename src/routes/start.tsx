@@ -278,7 +278,7 @@ function OptionList({ options, value, onSelect }: { options: readonly Option[]; 
   return <div className="space-y-3">{options.map((option) => <ChoiceButton key={option.id} {...option} value={option.id} selected={value === option.id} onSelect={onSelect} />)}</div>;
 }
 
-function ChoiceButton({ value, label, note, icon, selected, disabled = false, onSelect }: Option & { value: string; selected: boolean; disabled?: boolean; onSelect: (value: string) => void }) {
+function ChoiceButton({ value, label, note, icon, selected, disabled = false, onSelect }: Omit<Option, "id"> & { value: string; selected: boolean; disabled?: boolean; onSelect: (value: string) => void }) {
   return (
     <Button type="button" variant="outline" disabled={disabled} aria-pressed={selected} onClick={() => onSelect(value)} className={`h-auto min-h-16 w-full justify-start whitespace-normal rounded-2xl border-2 px-4 py-3 text-left ${selected ? "border-primary bg-primary/10" : "bg-card"}`}>
       {icon && <span className="w-8 shrink-0 text-center text-xl" aria-hidden="true">{icon}</span>}
