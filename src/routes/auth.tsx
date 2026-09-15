@@ -116,12 +116,12 @@ function AuthPage() {
 
   if (view === "welcome") {
     return (
-      <main className="auth-welcome flex min-h-[100dvh] justify-center overflow-hidden bg-foreground text-primary-foreground">
+      <main className="auth-welcome flex min-h-[100dvh] justify-center overflow-hidden bg-background text-foreground">
         <div className="flex w-full max-w-md flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
           <Link
             to="/"
             aria-label="Back to Habla home"
-            className="grid h-10 w-10 place-items-center rounded-full border border-primary-foreground/15 text-primary-foreground/80"
+            className="grid h-10 w-10 place-items-center rounded-full border-2 border-border bg-card text-muted-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -135,7 +135,7 @@ function AuthPage() {
               className="auth-mascot h-auto w-[min(66vw,17rem)] object-contain"
             />
             <h1 className="mt-1 text-4xl font-black text-primary">habla</h1>
-            <p className="mt-2 text-base font-bold text-primary-foreground/55">
+            <p className="mt-2 text-base font-bold text-muted-foreground">
               Your world is ready to talk.
             </p>
           </section>
@@ -152,7 +152,7 @@ function AuthPage() {
               type="button"
               variant="outline"
               onClick={() => openForm("signin")}
-              className="h-14 w-full rounded-2xl border-2 border-primary-foreground/20 bg-transparent text-sm font-black uppercase text-primary hover:bg-primary-foreground/5 hover:text-primary"
+              className="h-14 w-full rounded-2xl border-2 border-border bg-card text-sm font-black uppercase text-primary hover:bg-accent hover:text-primary"
             >
               I already have an account
             </Button>
