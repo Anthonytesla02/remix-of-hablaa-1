@@ -63,7 +63,7 @@ function IntroductionPage() {
   if (!message) return null;
 
   return (
-    <main className="flex min-h-[100dvh] justify-center overflow-hidden bg-foreground text-primary-foreground">
+    <main className="flex min-h-[100dvh] justify-center overflow-hidden bg-background text-foreground">
       <div className="flex w-full max-w-md flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
         <Button
           type="button"
@@ -71,7 +71,7 @@ function IntroductionPage() {
           size="icon"
           aria-label={step === 0 ? "Back to account options" : "Previous introduction"}
           onClick={goBack}
-          className="rounded-full text-primary-foreground/45 hover:bg-primary-foreground/5 hover:text-primary-foreground"
+          className="rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <ArrowLeft className="h-7 w-7" />
         </Button>
@@ -81,20 +81,20 @@ function IntroductionPage() {
           className="step-in flex min-h-0 flex-1 flex-col items-center justify-center pb-10 text-center"
           aria-live="polite"
         >
-          <div className="relative w-full max-w-sm rounded-[2rem] border-[3px] border-primary-foreground/20 px-6 py-5">
-            <p className="text-balance text-[1.35rem] font-bold leading-relaxed text-primary-foreground">
+          <div className="relative w-full max-w-sm rounded-[2rem] border-[3px] border-border bg-card px-6 py-5 shadow-sm">
+            <p className="text-balance text-[1.35rem] font-bold leading-relaxed text-foreground">
               {message.text}
             </p>
             <span
               aria-hidden="true"
-              className="absolute -bottom-[0.8rem] left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 border-b-[3px] border-r-[3px] border-primary-foreground/20 bg-foreground"
+              className="absolute -bottom-[0.8rem] left-1/2 h-6 w-6 -translate-x-1/2 rotate-45 border-b-[3px] border-r-[3px] border-border bg-card"
             />
           </div>
 
           <div className="relative mt-8 grid h-48 w-48 place-items-center">
             <span
               aria-hidden="true"
-              className="absolute bottom-3 h-14 w-36 rounded-[50%] bg-primary-foreground/10"
+              className="absolute bottom-3 h-14 w-36 rounded-[50%] bg-muted"
             />
             <img
               src={llamaAvatar}

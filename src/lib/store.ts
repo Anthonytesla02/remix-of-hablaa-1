@@ -9,6 +9,8 @@ export type Profile = {
   timelineId: string;
   tierId: string;
   personaId: string;
+  discoverySource?: string;
+  startingLevel?: string;
   startedAt: number;
 };
 
